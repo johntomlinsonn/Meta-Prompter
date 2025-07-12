@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Chrome Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <h1>My Chrome Extension</h1>
+    </header>
+    
+    <main class="popup-content">
+      <div class="status-section">
+        <h2>Status</h2>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span id="statusText">Enabled</span>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h2>Settings</h2>
+        <div class="setting-item">
+          <label for="themeSelect">Theme:</label>
+          <select id="themeSelect">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="action-section">
+        <button id="actionButton">Perform Action</button>
+      </div>
+    </main>
+    
+    <footer class="popup-footer">
+      <button id="optionsButton">Options</button>
+    </footer>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
