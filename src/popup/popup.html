@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Chrome Extension</title>
+  <title>Meta-Prompter</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="popup-container">
     <header class="popup-header">
-      <h1>My Chrome Extension</h1>
+      <h1>Meta-Prompter</h1>
     </header>
     
     <main class="popup-content">
@@ -25,7 +25,26 @@
       </div>
       
       <div class="settings-section">
-        <h2>Settings</h2>
+        <h2>Prompt Enhancement</h2>
+        <div class="setting-item">
+          <label for="enhancementLevel">Enhancement Level:</label>
+          <select id="enhancementLevel">
+            <option value="minimal">Minimal</option>
+            <option value="moderate" selected>Moderate</option>
+            <option value="aggressive">Aggressive</option>
+          </select>
+        </div>
+        
+        <div class="setting-item">
+          <label for="autoApply">Auto-apply Suggestions:</label>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoApplyToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        
         <div class="setting-item">
           <label for="themeSelect">Theme:</label>
           <select id="themeSelect">
@@ -36,7 +55,7 @@
       </div>
       
       <div class="action-section">
-        <button id="actionButton">Perform Action</button>
+        <button id="enhanceCurrentButton">Enhance Current Prompt</button>
       </div>
     </main>
     

@@ -4,7 +4,9 @@
 const enableToggle = document.getElementById('enableToggle');
 const statusText = document.getElementById('statusText');
 const themeSelect = document.getElementById('themeSelect');
-const actionButton = document.getElementById('actionButton');
+const enhancementLevel = document.getElementById('enhancementLevel');
+const autoApplyToggle = document.getElementById('autoApplyToggle');
+const enhanceCurrentButton = document.getElementById('enhanceCurrentButton');
 const optionsButton = document.getElementById('optionsButton');
 
 // Initialize popup
@@ -18,6 +20,8 @@ function initializePopup() {
       enableToggle.checked = data.settings.enabled;
       statusText.textContent = data.settings.enabled ? 'Enabled' : 'Disabled';
       themeSelect.value = data.settings.theme;
+      enhancementLevel.value = data.settings.enhancementLevel || 'moderate';
+      autoApplyToggle.checked = data.settings.autoApply || false;
     }
   });
   
@@ -58,14 +62,50 @@ function setupEventListeners() {
     });
   });
   
-  // Action button
-  actionButton.addEventListener('click', () => {
-    console.log('Action button clicked');
+  // Enhancement level selection
+  enhancementLevel.addEventListener('change', () => {
+    const level = enhancementLevel.value;
+    
+    // Save to storage
+    chrome.storage.sync.get('settings', (data) => {
+      const settings = data.settings || {};
+      settings.enhancementLevel = level;
+      
+      chrome.storage.sync.set({ settings }, () => {
+        console.log('Enhancement level updated:', level);
+      });
+    });
+  });
+  
+  // Auto-apply toggle
+  autoApplyToggle.addEventListener('change', () => {
+    const autoApply = autoApplyToggle.checked;
+    
+    // Save to storage
+    chrome.storage.sync.get('settings', (data) => {
+      const settings = data.settings || {};
+      settings.autoApply = autoApply;
+      
+      chrome.storage.sync.set({ settings }, () => {
+        console.log('Auto-apply setting updated:', autoApply);
+      });
+    });
+  });
+  
+  // Enhance Current Prompt button
+  enhanceCurrentButton.addEventListener('click', () => {
+    console.log('Enhance Current Prompt button clicked');
     
     // Send message to the active tab's content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'performAction' });
+        chrome.tabs.sendMessage(tabs[0].id, { 
+          type: 'enhanceCurrentPrompt',
+          settings: {
+            level: enhancementLevel.value,
+            autoApply: autoApplyToggle.checked
+          }
+        });
       }
     });
   });
