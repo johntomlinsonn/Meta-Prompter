@@ -3,8 +3,13 @@
 
 import Cerebras from '@cerebras/cerebras_cloud_sdk';
 
-const client = new Cerebras({
-  apiKey: process.env.CEREBRAS_API_KEY,
+let storedApiKey = null;
+
+// Load API key from storage on startup
+chrome.storage.local.get('apiKey', (result) => {
+  if (result.apiKey) {
+    storedApiKey = result.apiKey;
+  }
 });
 
 // Keep track of which inputs are active across tabs
@@ -73,6 +78,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    
     (async () => {
       try {
+        // If storedApiKey is null, try to load it from storage
+        if (!storedApiKey) {
+          chrome.storage.local.get('apiKey', async (result) => {
+            if (result.apiKey) {
+              storedApiKey = result.apiKey;
+              const client = new Cerebras({ apiKey: storedApiKey });
+              const metaPrompt = await getMetaPrompt(message.text);
+              const completionCreateResponse = await client.chat.completions.create({
+                messages: [{ role: 'user', content: metaPrompt }],
+                model: 'llama3.1-8b',
+              });
+              console.log('Cerebras AI response:', completionCreateResponse);
+              sendResponse({ result: completionCreateResponse });
+            } else {
+              sendResponse({ error: 'API key not set.' });
+            }
+          });
+          return;
+        }
+        const client = new Cerebras({ apiKey: storedApiKey });
         const metaPrompt = await getMetaPrompt(message.text);
         const completionCreateResponse = await client.chat.completions.create({
           messages: [{ role: 'user', content: metaPrompt }],
@@ -86,6 +111,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     })();
     return true; // Indicates async response
+  }
+
+  if (message.action === 'saveApiKey') {
+    storedApiKey = message.apiKey;
+    chrome.storage.local.set({ apiKey: storedApiKey });
+    sendResponse({ success: true });
+  }
+  if (message.action === 'getApiKey') {
+    sendResponse({ apiKey: storedApiKey });
   }
 });
 

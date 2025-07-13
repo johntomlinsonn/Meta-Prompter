@@ -1,120 +1,69 @@
-// Popup script
+import './popup.css';
 
-// DOM elements
-const enableToggle = document.getElementById('enableToggle');
-const statusText = document.getElementById('statusText');
-const themeSelect = document.getElementById('themeSelect');
-const enhancementLevel = document.getElementById('enhancementLevel');
-const autoApplyToggle = document.getElementById('autoApplyToggle');
-const enhanceCurrentButton = document.getElementById('enhanceCurrentButton');
-const optionsButton = document.getElementById('optionsButton');
+document.addEventListener('DOMContentLoaded', () => {
+  // Always use light theme
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.getElementById('themeSelect').value = 'light';
+  document.getElementById('themeSelect').disabled = true;
 
-// Initialize popup
-function initializePopup() {
-  console.log('Popup initialized');
-  
-  // Load settings from storage
-  chrome.storage.sync.get('settings', (data) => {
-    if (data.settings) {
-      // Update UI based on stored settings
-      enableToggle.checked = data.settings.enabled;
-      statusText.textContent = data.settings.enabled ? 'Enabled' : 'Disabled';
-      themeSelect.value = data.settings.theme;
-      enhancementLevel.value = data.settings.enhancementLevel || 'moderate';
-      autoApplyToggle.checked = data.settings.autoApply || false;
+  // API Key show/hide
+  const apiKeyInput = document.getElementById('apiKey');
+  const toggleApiKey = document.getElementById('toggleApiKey');
+  toggleApiKey.addEventListener('click', () => {
+    apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+    toggleApiKey.setAttribute('aria-label', apiKeyInput.type === 'password' ? 'Show API key' : 'Hide API key');
+  });
+
+  // Enhancement level
+  const enhancementLevel = document.getElementById('enhancementLevel');
+  enhancementLevel.addEventListener('change', (e) => {
+    localStorage.setItem('enhancementLevel', e.target.value);
+  });
+  enhancementLevel.value = localStorage.getItem('enhancementLevel') || 'moderate';
+
+  // Checkboxes
+  const autoApply = document.getElementById('autoApply');
+  const showNotifications = document.getElementById('showNotifications');
+  autoApply.checked = localStorage.getItem('autoApply') !== 'false';
+  showNotifications.checked = localStorage.getItem('showNotifications') === 'true';
+  autoApply.addEventListener('change', (e) => {
+    localStorage.setItem('autoApply', e.target.checked);
+  });
+  showNotifications.addEventListener('change', (e) => {
+    localStorage.setItem('showNotifications', e.target.checked);
+  });
+
+  // Status indicator
+  function setStatus(enabled) {
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    if (enabled) {
+      statusDot.style.backgroundColor = '#10b981';
+      statusText.textContent = 'Enabled';
+    } else {
+      statusDot.style.backgroundColor = '#ef4444';
+      statusText.textContent = 'Disabled';
     }
-  });
-  
-  // Set up event listeners
-  setupEventListeners();
-}
+  }
+  setStatus(true);
 
-// Set up event listeners
-function setupEventListeners() {
-  // Toggle extension enabled/disabled
-  enableToggle.addEventListener('change', () => {
-    const isEnabled = enableToggle.checked;
-    statusText.textContent = isEnabled ? 'Enabled' : 'Disabled';
-    
-    // Save to storage
-    chrome.storage.sync.get('settings', (data) => {
-      const settings = data.settings || {};
-      settings.enabled = isEnabled;
-      
-      chrome.storage.sync.set({ settings }, () => {
-        console.log('Settings updated:', settings);
-      });
-    });
+  // Save Changes button (no animation)
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.addEventListener('click', () => {
+    saveBtn.disabled = true;
+    const original = saveBtn.innerHTML;
+    // Send API key to background.js
+    const apiKey = apiKeyInput.value.trim();
+    chrome.runtime.sendMessage({ action: 'saveApiKey', apiKey });
+    saveBtn.innerHTML = 'Saved!';
+    setTimeout(() => {
+      saveBtn.innerHTML = original;
+      saveBtn.disabled = false;
+    }, 1200);
   });
-  
-  // Theme selection
-  themeSelect.addEventListener('change', () => {
-    const selectedTheme = themeSelect.value;
-    
-    // Save to storage
-    chrome.storage.sync.get('settings', (data) => {
-      const settings = data.settings || {};
-      settings.theme = selectedTheme;
-      
-      chrome.storage.sync.set({ settings }, () => {
-        console.log('Theme updated:', selectedTheme);
-      });
-    });
-  });
-  
-  // Enhancement level selection
-  enhancementLevel.addEventListener('change', () => {
-    const level = enhancementLevel.value;
-    
-    // Save to storage
-    chrome.storage.sync.get('settings', (data) => {
-      const settings = data.settings || {};
-      settings.enhancementLevel = level;
-      
-      chrome.storage.sync.set({ settings }, () => {
-        console.log('Enhancement level updated:', level);
-      });
-    });
-  });
-  
-  // Auto-apply toggle
-  autoApplyToggle.addEventListener('change', () => {
-    const autoApply = autoApplyToggle.checked;
-    
-    // Save to storage
-    chrome.storage.sync.get('settings', (data) => {
-      const settings = data.settings || {};
-      settings.autoApply = autoApply;
-      
-      chrome.storage.sync.set({ settings }, () => {
-        console.log('Auto-apply setting updated:', autoApply);
-      });
-    });
-  });
-  
-  // Enhance Current Prompt button
-  enhanceCurrentButton.addEventListener('click', () => {
-    console.log('Enhance Current Prompt button clicked');
-    
-    // Send message to the active tab's content script
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { 
-          type: 'enhanceCurrentPrompt',
-          settings: {
-            level: enhancementLevel.value,
-            autoApply: autoApplyToggle.checked
-          }
-        });
-      }
-    });
-  });
-  
+
   // Options button
-  optionsButton.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
+  document.getElementById('optionsBtn').addEventListener('click', () => {
+    window.open('options/options.html', '_blank');
   });
-}
-
-// Initialize when popup loads
-document.addEventListener('DOMContentLoaded', initializePopup);
+});
