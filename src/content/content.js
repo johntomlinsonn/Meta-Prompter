@@ -145,14 +145,37 @@ document.addEventListener('focusin', (event) => {
       removeMetaPromptButton(activeInputElement);
     }
     activeInputElement = element;
-    injectMetaPromptButton(element);
+    let value = '';
+    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+      value = element.value;
+    } else if (element.isContentEditable) {
+      value = element.innerText;
+    }
+    if (value && value.length > 0) {
+      injectMetaPromptButton(element);
+    } else {
+      removeMetaPromptButton(element);
+    }
   }
 });
 document.addEventListener('input', (event) => {
   const element = event.target;
   if (isTextInputElement(element) && element === activeInputElement) {
-    const button = element._metaPromptButton;
-    if (button) positionButton(button, element);
+    let value = '';
+    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+      value = element.value;
+    } else if (element.isContentEditable) {
+      value = element.innerText;
+    }
+    if (value && value.length > 0) {
+      if (!element._metaPromptButton) {
+        injectMetaPromptButton(element);
+      } else {
+        positionButton(element._metaPromptButton, element);
+      }
+    } else {
+      removeMetaPromptButton(element);
+    }
   }
 });
 window.addEventListener('scroll', () => {
