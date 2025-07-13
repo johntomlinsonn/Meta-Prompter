@@ -3,6 +3,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ZipPlugin = require('zip-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -48,6 +49,7 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
+      new Dotenv(),
       new CopyPlugin({
         patterns: [
           { 
@@ -95,7 +97,8 @@ module.exports = (env, argv) => {
               return JSON.stringify(manifest, null, 2);
             }
           },
-          { from: 'src/assets', to: 'assets' }
+          { from: 'src/assets', to: 'assets' },
+          { from: 'src/metaprompt.txt', to: 'metaprompt.txt' }
         ]
       }),
       new HtmlWebpackPlugin({

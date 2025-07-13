@@ -1,8 +1,22 @@
 // Background script for Chrome extension
 // This script runs in the background as a service worker
 
+import Cerebras from '@cerebras/cerebras_cloud_sdk';
+
+const client = new Cerebras({
+  apiKey: process.env.CEREBRAS_API_KEY,
+});
+
 // Keep track of which inputs are active across tabs
 let activeInputs = {};
+
+async function getMetaPrompt(userPrompt) {
+  // Read metaprompt.txt and replace {USER_PROMPT}
+  const response = await fetch(chrome.runtime.getURL('metaprompt.txt'));
+  let metaPrompt = await response.text();
+  metaPrompt = metaPrompt.replace(/`\{USER_PROMPT\}`/g, userPrompt);
+  return metaPrompt;
+}
 
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
@@ -53,6 +67,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (Object.keys(activeInputs).length === 0) {
       updateExtensionIcon(false);
     }
+  }
+
+  if (message.type === 'metaPrompt') {
+   
+    (async () => {
+      try {
+        const metaPrompt = await getMetaPrompt(message.text);
+        const completionCreateResponse = await client.chat.completions.create({
+          messages: [{ role: 'user', content: metaPrompt }],
+          model: 'llama3.1-8b',
+        });
+        console.log('Cerebras AI response:', completionCreateResponse);
+        sendResponse({ result: completionCreateResponse });
+      } catch (error) {
+        console.error('Cerebras API error:', error);
+        sendResponse({ error: error.message });
+      }
+    })();
+    return true; // Indicates async response
   }
 });
 
