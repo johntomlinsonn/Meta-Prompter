@@ -112,3 +112,43 @@ export function setStorageData(data) {
     chrome.storage.sync.set(data, resolve);
   });
 }
+
+export function handleMetaPrompt(text, callback) {
+  chrome.runtime.sendMessage(
+    { type: 'metaPrompt', text },
+    (response) => {
+      if (response && response.result) {
+        let aiText = '';
+        if (response.result.choices && response.result.choices[0] && response.result.choices[0].message && response.result.choices[0].message.content) {
+          aiText = response.result.choices[0].message.content;
+        } else {
+          aiText = JSON.stringify(response.result);
+        }
+        // Extract JSON block between ```json and ```
+        const jsonStart = aiText.indexOf('```json');
+        const jsonEnd = aiText.lastIndexOf('```');
+        let jsonString = '';
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+          jsonString = aiText.substring(jsonStart + 7, jsonEnd).trim();
+        } else {
+          // fallback: try to find any {...} block
+          const match = aiText.match(/\{[\s\S]*\}/);
+          jsonString = match ? match[0] : '';
+        }
+        if (typeof callback === 'function') {
+          callback(jsonString);
+        }
+      } else if (response && response.error) {
+        console.error('Cerebras API error:', response.error);
+        if (typeof callback === 'function') {
+          callback(null, response.error);
+        }
+      } else {
+        console.error('No response from background script.');
+        if (typeof callback === 'function') {
+          callback(null, 'No response from background script.');
+        }
+      }
+    }
+  );
+}

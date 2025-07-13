@@ -1,5 +1,7 @@
 // Minimal content script for Meta-Prompter button
 
+import { handleMetaPrompt } from '../utils/helpers.js';
+
 let activeInputElement = null;
 
 function isTextInputElement(element) {
@@ -62,13 +64,26 @@ function injectMetaPromptButton(element) {
     button.style.borderColor = '#d3e3fd';
     button.style.boxShadow = '0 2px 6px rgba(60, 64, 67, 0.15)';
   });
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
+  button.onclick = (e) => {
     e.stopPropagation();
-    const value = element.value || element.textContent || '';
-    console.log('Meta-Prompter Button Clicked! Input value:', value);
-    showClickFeedback(element);
-  });
+    let value = '';
+    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+      value = element.value;
+    } else if (element.isContentEditable) {
+      value = element.innerText;
+    }
+    handleMetaPrompt(value, (aiText, error) => {
+      if (aiText) {
+        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+          element.value = aiText;
+        } else if (element.isContentEditable) {
+          element.innerText = aiText;
+        }
+      } else if (error) {
+        console.error(error);
+      }
+    });
+  };
   positionButton(button, element);
   document.body.appendChild(button);
   element._metaPromptButton = button;
