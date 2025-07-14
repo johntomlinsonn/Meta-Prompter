@@ -2,8 +2,10 @@
 
 import { handleMetaPrompt } from '../utils/helpers.js';
 import { createMetaPromptButton } from './MetaPromptButton.js';
+import { createPromptReviewPanel } from './PromptReviewPanel.js';
 
 let activeInputElement = null;
+let activePromptPanel = null;
 
 function isTextInputElement(element) {
   if (!element) return false;
@@ -34,17 +36,26 @@ function injectMetaPromptButton(element) {
     } else if (element.isContentEditable) {
       value = element.innerText;
     }
-    handleMetaPrompt(value, (aiText, error) => {
-      if (aiText) {
-        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-          element.value = aiText;
-        } else if (element.isContentEditable) {
-          element.innerText = aiText;
-        }
-      } else if (error) {
-        console.error(error);
+    if (activePromptPanel) {
+      activePromptPanel.overlay.remove();
+      activePromptPanel = null;
+    }
+    // Start with a fake conversation
+    let messages = [
+      { role: 'ai', content: 'Hi! I can help you improve your prompt. What are you trying to achieve?' },
+      { role: 'user', content: 'I want to write a summary of a research paper for a general audience.' },
+      { role: 'ai', content: 'Great! Who is your intended audience? (e.g., students, professionals, the public)' },
+      { role: 'user', content: 'The general public, no technical background.' },
+      { role: 'ai', content: 'Understood. Would you like the summary to be brief or detailed?' }
+    ];
+    activePromptPanel = createPromptReviewPanel({
+      messages,
+      onSend: (userMsg) => {
+        messages.push({ role: 'user', content: userMsg });
+        activePromptPanel.setMessages(messages);
       }
     });
+    document.body.appendChild(activePromptPanel.overlay);
   };
   const button = createMetaPromptButton(element, onClick);
   positionButton(button, element);

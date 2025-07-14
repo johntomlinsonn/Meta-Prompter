@@ -57,9 +57,6 @@ export function createMetaPromptButton(element, onClick) {
   `;
   button.appendChild(tooltip);
 
-  // Remove all shadow/aura logic
-  // No need to detect background color or calculate contrast
-
   button.style.cssText = `
     position: absolute;
     width: 28px;
