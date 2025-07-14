@@ -51,28 +51,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // Required for async response
   }
-  
-  // Handle when an input is focused
-  else if (message.type === 'inputFocused') {
-    const tabId = sender.tab.id;
-    activeInputs[tabId] = message.data;
-    console.log(`Input focused in tab ${tabId}:`, message.data);
-    
-    // Update the extension icon to show it's active on this page
-    updateExtensionIcon(true);
-  }
-  
-  // Handle when an input is blurred (loses focus)
-  else if (message.type === 'inputBlurred') {
-    const tabId = sender.tab.id;
-    delete activeInputs[tabId];
-    console.log(`Input blurred in tab ${tabId}`);
-    
-    // If no active inputs, update the icon to show inactive state
-    if (Object.keys(activeInputs).length === 0) {
-      updateExtensionIcon(false);
-    }
-  }
 
   if (message.type === 'metaPrompt') {
    
@@ -81,10 +59,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // If storedApiKey is null, try to load it from storage
         if (!storedApiKey) {
           chrome.storage.local.get('apiKey', async (result) => {
+
             if (result.apiKey) {
               storedApiKey = result.apiKey;
-              const client = new Cerebras({ apiKey: storedApiKey });
-              const metaPrompt = await getMetaPrompt(message.text);
+              const client = new Cerebras(
+                                          { apiKey: storedApiKey 
+                                          });
+              const metaPrompt = await getMetaPrompt(message.prompt);
               const completionCreateResponse = await client.chat.completions.create({
                 messages: [{ role: 'user', content: metaPrompt }],
                 model: 'llama3.1-8b',
@@ -98,7 +79,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
         const client = new Cerebras({ apiKey: storedApiKey });
-        const metaPrompt = await getMetaPrompt(message.text);
+        const metaPrompt = await getMetaPrompt(message.prompt);
         const completionCreateResponse = await client.chat.completions.create({
           messages: [{ role: 'user', content: metaPrompt }],
           model: 'llama3.1-8b',
