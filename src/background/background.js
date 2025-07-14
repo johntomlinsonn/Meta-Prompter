@@ -121,6 +121,65 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'getApiKey') {
     sendResponse({ apiKey: storedApiKey });
   }
+
+  // New: Generate improvement questions for a prompt
+  if (message.type === 'generatePromptQuestions') {
+    (async () => {
+      try {
+        if (!storedApiKey) {
+          chrome.storage.local.get('apiKey', async (result) => {
+            if (result.apiKey) {
+              storedApiKey = result.apiKey;
+              const client = new Cerebras({ apiKey: storedApiKey });
+              const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
+              const completion = await client.chat.completions.create({
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: message.prompt }
+                ],
+                model: 'llama3.1-8b',
+              });
+              const text = completion.choices[0].message.content;
+              let questions = [];
+              try {
+                questions = JSON.parse(text);
+              } catch (e) {
+                // fallback: try to extract JSON array
+                const match = text.match(/\[.*\]/s);
+                if (match) questions = JSON.parse(match[0]);
+              }
+              sendResponse({ questions });
+            } else {
+              sendResponse({ error: 'API key not set.' });
+            }
+          });
+          return;
+        }
+        const client = new Cerebras({ apiKey: storedApiKey });
+        const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
+        const completion = await client.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message.prompt }
+          ],
+          model: 'llama3.1-8b',
+        });
+        const text = completion.choices[0].message.content;
+        let questions = [];
+        try {
+          questions = JSON.parse(text);
+        } catch (e) {
+          // fallback: try to extract JSON array
+          const match = text.match(/\[.*\]/s);
+          if (match) questions = JSON.parse(match[0]);
+        }
+        sendResponse({ questions });
+      } catch (error) {
+        sendResponse({ error: error.message });
+      }
+    })();
+    return true;
+  }
 });
 
 // Function to update the extension icon

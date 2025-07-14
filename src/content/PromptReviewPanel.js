@@ -16,14 +16,8 @@
  * @returns {Object} { panel, setStep, setChat, setFinalPrompt, close }
  */
 export function createPromptReviewPanel({
-  messages = [
-    { role: 'ai', content: 'Hi! I can help you improve your prompt. What are you trying to achieve?' },
-    { role: 'user', content: 'I want to write a summary of a research paper for a general audience.' },
-    { role: 'ai', content: 'Great! Who is your intended audience? (e.g., students, professionals, the public)' },
-    { role: 'user', content: 'The general public, no technical background.' },
-    { role: 'ai', content: 'Understood. Would you like the summary to be brief or detailed?' }
-  ],
-  onSend
+  question = '',
+  onAnswer
 } = {}) {
   // Create overlay and sidebar
   const overlay = document.createElement('div');
@@ -89,64 +83,35 @@ export function createPromptReviewPanel({
         background: rgba(255,255,255,0.10);
         color: #fff;
       }
-      .mprp-messages-area {
+      .mprp-question-area {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        overflow-y: auto;
-        padding: 18px 18px 12px 18px;
+        justify-content: center;
+        align-items: center;
+        padding: 32px 24px 0 24px;
         background: transparent;
-        border-radius: 0;
-        border: none;
-        margin: 0;
-        min-height: 0;
-        box-shadow: none;
-        backdrop-filter: none;
       }
-      .mprp-chat-row {
-        display: flex;
-        align-items: flex-end;
-        gap: 10px;
-      }
-      .mprp-chat-ai {
-        justify-content: flex-start;
-      }
-      .mprp-chat-user {
-        justify-content: flex-end;
-      }
-      .mprp-chat-bubble {
-        max-width: 70%;
-        padding: 12px 16px;
-        border-radius: 14px;
-        font-size: 15px;
-        line-height: 1.5;
-        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.10);
-        background: rgba(255,255,255,0.38);
-        color: #222b45;
-        position: relative;
-        border: 1px solid rgba(255,255,255,0.32);
-        backdrop-filter: blur(8px) saturate(1.1);
-        -webkit-backdrop-filter: blur(8px) saturate(1.1);
-      }
-      .mprp-chat-ai .mprp-chat-bubble {
-        background: rgba(236,242,255,0.55);
+      .mprp-question-label {
+        font-size: 16px;
         color: #2e3a59;
-        border-bottom-left-radius: 4px;
+        font-weight: 500;
+        margin-bottom: 24px;
+        text-align: center;
+        background: rgba(236,242,255,0.55);
+        border-radius: 10px;
+        padding: 18px 18px;
+        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.10);
         border: 1px solid rgba(99,102,241,0.10);
-      }
-      .mprp-chat-user .mprp-chat-bubble {
-        background: rgba(99,102,241,0.18);
-        color: #fff;
-        border-bottom-right-radius: 4px;
-        border: 1px solid rgba(99,102,241,0.18);
+        max-width: 90%;
       }
       .mprp-input-area {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 18px 18px 24px 18px;
-        border-top: 1px solid rgba(255,255,255,0.18);
+        width: 100%;
+        max-width: 90%;
+        padding: 0 0 24px 0;
         background: transparent;
       }
       .mprp-input-field {
@@ -201,24 +166,19 @@ export function createPromptReviewPanel({
     <button class="mprp-close" aria-label="Close">&times;</button>
   `;
 
-  // Messages area
-  const messagesArea = document.createElement('div');
-  messagesArea.className = 'mprp-messages-area';
-  function renderMessages(msgs) {
-    messagesArea.innerHTML = msgs.map(msg => `
-      <div class="mprp-chat-row mprp-chat-${msg.role}">
-        <div class="mprp-chat-bubble">${msg.content}</div>
-      </div>
-    `).join('');
-    messagesArea.scrollTop = messagesArea.scrollHeight;
-  }
-  renderMessages(messages);
+  // Question area
+  const questionArea = document.createElement('div');
+  questionArea.className = 'mprp-question-area';
+  const questionLabel = document.createElement('div');
+  questionLabel.className = 'mprp-question-label';
+  questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${question}`;
+  questionArea.appendChild(questionLabel);
 
   // Input area
   const inputArea = document.createElement('div');
   inputArea.className = 'mprp-input-area';
   inputArea.innerHTML = `
-    <input class="mprp-input-field" type="text" placeholder="Type your reply..." />
+    <input class="mprp-input-field" type="text" placeholder="Type your answer..." />
     <button class="mprp-send-btn">Send</button>
   `;
   const inputField = inputArea.querySelector('.mprp-input-field');
@@ -227,21 +187,22 @@ export function createPromptReviewPanel({
   // Send handler
   sendBtn.addEventListener('click', () => {
     if (inputField.value.trim()) {
-      if (typeof onSend === 'function') onSend(inputField.value.trim());
+      if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
       inputField.value = '';
     }
   });
   inputField.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && inputField.value.trim()) {
-      if (typeof onSend === 'function') onSend(inputField.value.trim());
+      if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
       inputField.value = '';
     }
   });
 
+  questionArea.appendChild(inputArea);
+
   // Compose sidebar
   sidebar.appendChild(header);
-  sidebar.appendChild(messagesArea);
-  sidebar.appendChild(inputArea);
+  sidebar.appendChild(questionArea);
 
   // Close button handler
   const closeButton = sidebar.querySelector('.mprp-close');
@@ -251,11 +212,17 @@ export function createPromptReviewPanel({
 
   overlay.appendChild(sidebar);
 
-  // API for updating messages
+  // API for updating question
+  function setQuestion(newQ) {
+    questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${newQ}`;
+    inputField.value = '';
+    inputField.focus();
+  }
+
   return {
     overlay,
     panel: sidebar,
-    setMessages: renderMessages,
+    setQuestion,
     close: () => overlay.remove()
   };
 }

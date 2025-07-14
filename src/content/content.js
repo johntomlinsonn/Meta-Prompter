@@ -40,22 +40,46 @@ function injectMetaPromptButton(element) {
       activePromptPanel.overlay.remove();
       activePromptPanel = null;
     }
-    // Start with a fake conversation
-    let messages = [
-      { role: 'ai', content: 'Hi! I can help you improve your prompt. What are you trying to achieve?' },
-      { role: 'user', content: 'I want to write a summary of a research paper for a general audience.' },
-      { role: 'ai', content: 'Great! Who is your intended audience? (e.g., students, professionals, the public)' },
-      { role: 'user', content: 'The general public, no technical background.' },
-      { role: 'ai', content: 'Understood. Would you like the summary to be brief or detailed?' }
-    ];
-    activePromptPanel = createPromptReviewPanel({
-      messages,
-      onSend: (userMsg) => {
-        messages.push({ role: 'user', content: userMsg });
-        activePromptPanel.setMessages(messages);
+    // Step 1: Request questions from background
+    chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
+      if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
+        let qaPairs = [];
+        let currentQuestionIndex = 0;
+        function handleAnswer(answer) {
+          qaPairs.push({ question: response.questions[currentQuestionIndex], answer });
+          currentQuestionIndex++;
+          if (currentQuestionIndex < response.questions.length) {
+            activePromptPanel.setQuestion(response.questions[currentQuestionIndex]);
+          } else {
+            chrome.runtime.sendMessage({
+              type: 'metaPrompt',
+              prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
+            }, 
+            (improveResp) => {
+              console.log(improveResp);
+              if (improveResp && improveResp.improvedPrompt) {
+                if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+                  element.value = improveResp.improvedPrompt;
+                } else if (element.isContentEditable) {
+                  element.innerText = improveResp.improvedPrompt;
+                }
+              }
+              if (activePromptPanel) {
+                activePromptPanel.overlay.remove();
+                activePromptPanel = null;
+              }
+            });
+          }
+        }
+        activePromptPanel = createPromptReviewPanel({
+          question: response.questions[0],
+          onAnswer: handleAnswer
+        });
+        document.body.appendChild(activePromptPanel.overlay);
+      } else {
+        alert('Failed to generate improvement questions.');
       }
     });
-    document.body.appendChild(activePromptPanel.overlay);
   };
   const button = createMetaPromptButton(element, onClick);
   positionButton(button, element);
