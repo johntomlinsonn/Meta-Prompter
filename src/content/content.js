@@ -40,7 +40,7 @@ function injectMetaPromptButton(element) {
       activePromptPanel.overlay.remove();
       activePromptPanel = null;
     }
-    // Step 1: Request questions from background
+
     chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
       if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
         let qaPairs = [];
@@ -56,6 +56,7 @@ function injectMetaPromptButton(element) {
               prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
             }, 
             (improveResp) => {
+              improveResp = handleMetaPrompt(improveResp);
               console.log(improveResp);
               if (improveResp && improveResp.improvedPrompt) {
                 if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
