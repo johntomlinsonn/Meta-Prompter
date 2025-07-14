@@ -58,11 +58,11 @@ function injectMetaPromptButton(element) {
             (improveResp) => {
               improveResp = handleMetaPrompt(improveResp);
               console.log(improveResp);
-              if (improveResp && improveResp.improvedPrompt) {
+              if (improveResp) {
                 if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-                  element.value = improveResp.improvedPrompt;
+                  element.value = improveResp;
                 } else if (element.isContentEditable) {
-                  element.innerText = improveResp.improvedPrompt;
+                  element.innerText = improveResp;
                 }
               }
               if (activePromptPanel) {
