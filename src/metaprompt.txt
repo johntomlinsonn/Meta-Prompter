@@ -40,7 +40,7 @@
     },
     {
       "step": "5.4",
-      "action": "expected_output_format: Specify exact structure—Markdown fenced code blocks, JSON object keys, bullet sections, token limits, word count, xml-tag placeholders, etc."
+      "action": "expected_output_format: Specify exact structure—Markdown fenced code blocks, JSON object keys, bullet sections, token limits, word count, xml-tag placeholders, etc.. Expected outputs should always be readabe for humans so no JSON or XML, have the prompt ask for Markdown, code snippets, steps, plain english."
     },
     {
       "step": "5.5",

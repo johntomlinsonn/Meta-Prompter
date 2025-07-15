@@ -1,8 +1,11 @@
 // Minimal content script for Meta-Prompter button
 
 import { handleMetaPrompt } from '../utils/helpers.js';
+import { createMetaPromptButton } from './MetaPromptButton.js';
+import { createPromptReviewPanel } from './PromptReviewPanel.js';
 
 let activeInputElement = null;
+let activePromptPanel = null;
 
 function isTextInputElement(element) {
   if (!element) return false;
@@ -26,64 +29,60 @@ function removeMetaPromptButton(element) {
 function injectMetaPromptButton(element) {
   // Only inject if not already present
   if (element._metaPromptButton) return;
-  const button = document.createElement('div');
-  button.className = 'meta-prompt-button';
-  button.setAttribute('data-meta-prompt-button', 'true');
-  // Use the correct path for the built extension
-  const iconPath = chrome.runtime.getURL('assets/icons/icon16.png');
-  const iconImg = document.createElement('img');
-  iconImg.src = iconPath;
-  iconImg.alt = 'Meta-Prompt';
-  iconImg.style.width = '16px';
-  iconImg.style.height = '16px';
-  iconImg.style.display = 'block';
-  iconImg.style.margin = 'auto';
-  button.appendChild(iconImg);
-  button.style.cssText = `
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    background: #fff;
-    border: 1.5px solid #d3e3fd;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
-    transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
-  `;
-  button.addEventListener('mouseenter', () => {
-    button.style.background = '#e8f0fe';
-    button.style.borderColor = '#4285f4';
-    button.style.boxShadow = '0 4px 12px rgba(66, 133, 244, 0.18)';
-  });
-  button.addEventListener('mouseleave', () => {
-    button.style.background = '#fff';
-    button.style.borderColor = '#d3e3fd';
-    button.style.boxShadow = '0 2px 6px rgba(60, 64, 67, 0.15)';
-  });
-  button.onclick = (e) => {
-    e.stopPropagation();
+  const onClick = () => {
     let value = '';
     if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
       value = element.value;
     } else if (element.isContentEditable) {
       value = element.innerText;
     }
-    handleMetaPrompt(value, (aiText, error) => {
-      if (aiText) {
-        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-          element.value = aiText;
-        } else if (element.isContentEditable) {
-          element.innerText = aiText;
+    if (activePromptPanel) {
+      activePromptPanel.overlay.remove();
+      activePromptPanel = null;
+    }
+
+    chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
+      if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
+        let qaPairs = [];
+        let currentQuestionIndex = 0;
+        function handleAnswer(answer) {
+          qaPairs.push({ question: response.questions[currentQuestionIndex], answer });
+          currentQuestionIndex++;
+          if (currentQuestionIndex < response.questions.length) {
+            activePromptPanel.setQuestion(response.questions[currentQuestionIndex]);
+          } else {
+            chrome.runtime.sendMessage({
+              type: 'metaPrompt',
+              prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
+            }, 
+            (improveResp) => {
+              improveResp = handleMetaPrompt(improveResp);
+              console.log(improveResp);
+              if (improveResp) {
+                if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+                  element.value = improveResp;
+                } else if (element.isContentEditable) {
+                  element.innerText = improveResp;
+                }
+              }
+              if (activePromptPanel) {
+                activePromptPanel.overlay.remove();
+                activePromptPanel = null;
+              }
+            });
+          }
         }
-      } else if (error) {
-        console.error(error);
+        activePromptPanel = createPromptReviewPanel({
+          question: response.questions[0],
+          onAnswer: handleAnswer
+        });
+        document.body.appendChild(activePromptPanel.overlay);
+      } else {
+        alert('Failed to generate improvement questions.');
       }
     });
   };
+  const button = createMetaPromptButton(element, onClick);
   positionButton(button, element);
   document.body.appendChild(button);
   element._metaPromptButton = button;
@@ -96,13 +95,9 @@ function positionButton(button, element) {
   const buttonSize = 24;
   const padding = 4;
   let top, left;
-  if (element.tagName === 'TEXTAREA' || element.isContentEditable) {
-    top = rect.bottom + scrollTop - buttonSize - padding;
-    left = rect.right + scrollLeft - buttonSize - padding;
-  } else {
-    top = rect.top + scrollTop + (rect.height - buttonSize) / 2;
-    left = rect.right + scrollLeft - buttonSize - padding;
-  }
+  // Place in the top right corner of the input/textarea/contenteditable
+  top = rect.top + scrollTop + padding;
+  left = rect.right + scrollLeft - buttonSize - padding;
   button.style.top = `${top}px`;
   button.style.left = `${left}px`;
 }
@@ -145,14 +140,37 @@ document.addEventListener('focusin', (event) => {
       removeMetaPromptButton(activeInputElement);
     }
     activeInputElement = element;
-    injectMetaPromptButton(element);
+    let value = '';
+    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+      value = element.value;
+    } else if (element.isContentEditable) {
+      value = element.innerText;
+    }
+    if (value && value.length > 0) {
+      injectMetaPromptButton(element);
+    } else {
+      removeMetaPromptButton(element);
+    }
   }
 });
 document.addEventListener('input', (event) => {
   const element = event.target;
   if (isTextInputElement(element) && element === activeInputElement) {
-    const button = element._metaPromptButton;
-    if (button) positionButton(button, element);
+    let value = '';
+    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+      value = element.value;
+    } else if (element.isContentEditable) {
+      value = element.innerText;
+    }
+    if (value && value.length > 0) {
+      if (!element._metaPromptButton) {
+        injectMetaPromptButton(element);
+      } else {
+        positionButton(element._metaPromptButton, element);
+      }
+    } else {
+      removeMetaPromptButton(element);
+    }
   }
 });
 window.addEventListener('scroll', () => {
