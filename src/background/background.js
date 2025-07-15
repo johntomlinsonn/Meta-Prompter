@@ -68,7 +68,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               const metaPrompt = await getMetaPrompt(message.prompt);
               const completionCreateResponse = await client.chat.completions.create({
                 messages: [{ role: 'user', content: metaPrompt }],
-                model: 'llama3.1-8b',
+                model: 'llama-4-scout-17b-16e-instruct',
               });
               console.log('Cerebras AI response:', completionCreateResponse);
               sendResponse({ result: completionCreateResponse });
@@ -82,7 +82,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const metaPrompt = await getMetaPrompt(message.prompt);
         const completionCreateResponse = await client.chat.completions.create({
           messages: [{ role: 'user', content: metaPrompt }],
-          model: 'llama3.1-8b',
+          model: 'llama-4-scout-17b-16e-instruct',
         });
         console.log('Cerebras AI response:', completionCreateResponse);
         sendResponse({ result: completionCreateResponse });
@@ -118,7 +118,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   { role: 'system', content: systemPrompt },
                   { role: 'user', content: message.prompt }
                 ],
-                model: 'llama3.1-8b',
+                model: 'llama-4-scout-17b-16e-instruct',
               });
               const text = completion.choices[0].message.content;
               let questions = [];
@@ -143,7 +143,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message.prompt }
           ],
-          model: 'llama3.1-8b',
+          model: 'llama-4-scout-17b-16e-instruct',
         });
         const text = completion.choices[0].message.content;
         let questions = [];
