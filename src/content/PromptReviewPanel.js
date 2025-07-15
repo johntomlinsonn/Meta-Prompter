@@ -36,17 +36,15 @@ export function createPromptReviewPanel({
       .mprp-sidebar {
         width: 100%;
         height: 100vh;
-        background: rgba(255,255,255,0.22);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 8px 0 rgba(255,255,255,0.18) inset;
-        border-radius: 18px 0 0 18px;
+        background: rgba(255,255,255,0.05);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        border-radius: 0;
         display: flex;
         flex-direction: column;
         animation: mprp-slide-in 0.25s cubic-bezier(.4,1.4,.6,1) 1;
-        border-left: 1.5px solid rgba(255,255,255,0.35);
-        border-top: 1.5px solid rgba(255,255,255,0.18);
-        border-bottom: 1.5px solid rgba(255,255,255,0.18);
-        backdrop-filter: blur(24px) saturate(1.25);
-        -webkit-backdrop-filter: blur(24px) saturate(1.25);
+        border-left: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-right: none;
         position: relative;
         overflow: hidden;
@@ -58,30 +56,34 @@ export function createPromptReviewPanel({
       .mprp-header {
         padding: 20px 24px 14px 24px;
         font-size: 18px;
-        font-weight: 600;
-        color: #e3e8f7;
-        background: linear-gradient(90deg, rgba(99,102,241,0.32) 0%, rgba(6,182,212,0.18) 100%);
-        border-radius: 18px 0 0 0;
-        letter-spacing: -0.5px;
+        font-weight: 500;
+        color: #fff;
+        mix-blend-mode: difference;
+        background: rgba(255,255,255,0.05);
+        border-radius: 0;
+        letter-spacing: -0.3px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid rgba(255,255,255,0.18);
-        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.06);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       .mprp-close {
         background: none;
         border: none;
-        color: #e3e8f7;
-        font-size: 22px;
+        color: #fff;
+        mix-blend-mode: difference;
+        font-size: 20px;
         cursor: pointer;
-        padding: 0 4px;
-        border-radius: 6px;
-        transition: background 0.2s, color 0.2s;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
       }
       .mprp-close:hover {
-        background: rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.15);
         color: #fff;
+        mix-blend-mode: difference;
       }
       .mprp-question-area {
         flex: 1;
@@ -94,16 +96,18 @@ export function createPromptReviewPanel({
       }
       .mprp-question-label {
         font-size: 16px;
-        color: #2e3a59;
-        font-weight: 500;
+        color: #fff;
+        mix-blend-mode: difference;
+        font-weight: 400;
         margin-bottom: 24px;
         text-align: center;
-        background: rgba(236,242,255,0.55);
-        border-radius: 10px;
-        padding: 18px 18px;
-        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.10);
-        border: 1px solid rgba(99,102,241,0.10);
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid rgba(255,255,255,0.15);
         max-width: 90%;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       .mprp-input-area {
         display: flex;
@@ -117,38 +121,47 @@ export function createPromptReviewPanel({
       .mprp-input-field {
         flex: 1;
         padding: 12px 16px;
-        border: 1.5px solid rgba(255,255,255,0.32);
-        border-radius: 12px;
-        background-color: rgba(255,255,255,0.65);
-        color: #2e3a59;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        background-color: rgba(255,255,255,0.1);
+        color: #fff;
+        mix-blend-mode: difference;
         font-size: 15px;
-        font-weight: 500;
-        transition: border 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px 0 rgba(99,102,241,0.06);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
+        font-weight: 400;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       .mprp-input-field:focus {
-        border-color: #a5b4fc;
-        box-shadow: 0 0 0 2px #e0e7ff;
+        border-color: rgba(255,255,255,0.4);
+        background-color: rgba(255,255,255,0.15);
+        color: #fff;
+        mix-blend-mode: difference;
         outline: none;
       }
+      .mprp-input-field::placeholder {
+        color: rgba(255,255,255,0.7);
+        mix-blend-mode: difference;
+      }
       .mprp-send-btn {
-        background: linear-gradient(90deg, rgba(99,102,241,0.32) 0%, rgba(6,182,212,0.18) 100%);
+        background: rgba(255,255,255,0.15);
         color: #fff;
-        border: none;
-        border-radius: 12px;
+        mix-blend-mode: difference;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
         font-size: 15px;
-        font-weight: 700;
+        font-weight: 500;
         padding: 12px 20px;
         cursor: pointer;
-        transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
-        box-shadow: 0 2px 8px 0 rgba(99,102,241,0.10);
+        transition: all 0.2s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       .mprp-send-btn:hover, .mprp-send-btn:focus {
-        background: linear-gradient(90deg, rgba(99,102,241,0.45) 0%, rgba(6,182,212,0.28) 100%);
+        background: rgba(255,255,255,0.25);
         color: #fff;
-        box-shadow: 0 6px 24px 0 rgba(99,102,241,0.18);
+        mix-blend-mode: difference;
+        border-color: rgba(255,255,255,0.5);
         outline: none;
       }
     </style>
