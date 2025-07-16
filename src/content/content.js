@@ -49,110 +49,164 @@ function injectMetaPromptButton(element) {
       activePromptPanel = null;
     }
 
-    chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
-      // Check for chrome runtime errors
-      if (chrome.runtime.lastError) {
-        console.error('Chrome runtime error:', chrome.runtime.lastError);
-        showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
-        return;
-      }
+    // Check enhancement level to determine flow
+    chrome.storage.sync.get(['enhancementLevel'], (result) => {
+      const enhancementLevel = result.enhancementLevel || 'moderate';
       
-      // Check for API key or internet connection errors
-      if (response && response.error) {
-        switch (response.error) {
-          case 'NO_API_KEY':
-            showApiKeyError();
-            break;
-          case 'NO_INTERNET':
-            showInternetError();
-            break;
-          case 'RATE_LIMIT':
-            showError('RATE_LIMIT');
-            break;
-          case 'INVALID_RESPONSE':
-            showError('INVALID_RESPONSE');
-            break;
-          default:
-            showError('API_ERROR', response.error);
-        }
-        return;
-      }
-      
-      if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
-        let qaPairs = [];
-        let currentQuestionIndex = 0;
-        function handleAnswer(answer) {
-          qaPairs.push({ question: response.questions[currentQuestionIndex], answer });
-          currentQuestionIndex++;
-          if (currentQuestionIndex < response.questions.length) {
-            activePromptPanel.setQuestion(response.questions[currentQuestionIndex]);
-          } else {
-            chrome.runtime.sendMessage({
-              type: 'metaPrompt',
-              prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
-            }, 
-            (improveResp) => {
-              // Check for chrome runtime errors
-              if (chrome.runtime.lastError) {
-                console.error('Chrome runtime error:', chrome.runtime.lastError);
-                showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
-                if (activePromptPanel) {
-                  activePromptPanel.overlay.remove();
-                  activePromptPanel = null;
-                }
-                return;
-              }
-              
-              // Check for API errors in improvement response
-              if (improveResp && improveResp.error) {
-                switch (improveResp.error) {
-                  case 'NO_API_KEY':
-                    showApiKeyError();
-                    break;
-                  case 'NO_INTERNET':
-                    showInternetError();
-                    break;
-                  case 'RATE_LIMIT':
-                    showError('RATE_LIMIT');
-                    break;
-                  case 'INVALID_RESPONSE':
-                    showError('INVALID_RESPONSE');
-                    break;
-                  default:
-                    showError('API_ERROR', improveResp.error);
-                }
-                if (activePromptPanel) {
-                  activePromptPanel.overlay.remove();
-                  activePromptPanel = null;
-                }
-                return;
-              }
-              
-              improveResp = handleMetaPrompt(improveResp);
-              console.log(improveResp);
-              if (improveResp) {
-                if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-                  element.value = improveResp;
-                } else if (element.isContentEditable) {
-                  element.innerText = improveResp;
-                }
-              } else {
-                showError('INVALID_RESPONSE', 'Failed to process the improved prompt.');
-              }
-              if (activePromptPanel) {
-                activePromptPanel.overlay.remove();
-                activePromptPanel = null;
-              }
-            });
+      if (enhancementLevel === 'light') {
+        // For light enhancement, skip questions and go straight to prompt improvement
+        chrome.runtime.sendMessage({
+          type: 'metaPrompt',
+          prompt: value,
+        }, (improveResp) => {
+          // Check for chrome runtime errors
+          if (chrome.runtime.lastError) {
+            console.error('Chrome runtime error:', chrome.runtime.lastError);
+            showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
+            return;
           }
-        }
-        activePromptPanel = createPromptReviewPanel({
-          question: response.questions[0],
-          onAnswer: handleAnswer
+          
+          // Check for API errors in improvement response
+          if (improveResp && improveResp.error) {
+            switch (improveResp.error) {
+              case 'NO_API_KEY':
+                showApiKeyError();
+                break;
+              case 'NO_INTERNET':
+                showInternetError();
+                break;
+              case 'RATE_LIMIT':
+                showError('RATE_LIMIT');
+                break;
+              case 'INVALID_RESPONSE':
+                showError('INVALID_RESPONSE');
+                break;
+              default:
+                showError('API_ERROR', improveResp.error);
+            }
+            return;
+          }
+          
+          improveResp = handleMetaPrompt(improveResp);
+          console.log(improveResp);
+          if (improveResp) {
+            if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+              element.value = improveResp;
+            } else if (element.isContentEditable) {
+              element.innerText = improveResp;
+            }
+          } else {
+            showError('INVALID_RESPONSE', 'Failed to process the improved prompt.');
+          }
         });
-        document.body.appendChild(activePromptPanel.overlay);
       } else {
-        showError('INVALID_RESPONSE', 'Failed to generate improvement questions. Please try again.');
+        // For moderate and aggressive enhancement, use the question flow
+        chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
+          // Check for chrome runtime errors
+          if (chrome.runtime.lastError) {
+            console.error('Chrome runtime error:', chrome.runtime.lastError);
+            showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
+            return;
+          }
+          
+          // Check for API key or internet connection errors
+          if (response && response.error) {
+            switch (response.error) {
+              case 'NO_API_KEY':
+                showApiKeyError();
+                break;
+              case 'NO_INTERNET':
+                showInternetError();
+                break;
+              case 'RATE_LIMIT':
+                showError('RATE_LIMIT');
+                break;
+              case 'INVALID_RESPONSE':
+                showError('INVALID_RESPONSE');
+                break;
+              default:
+                showError('API_ERROR', response.error);
+            }
+            return;
+          }
+          
+          if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
+            let qaPairs = [];
+            let currentQuestionIndex = 0;
+            function handleAnswer(answer) {
+              qaPairs.push({ question: response.questions[currentQuestionIndex], answer });
+              currentQuestionIndex++;
+              if (currentQuestionIndex < response.questions.length) {
+                activePromptPanel.setQuestion(response.questions[currentQuestionIndex]);
+              } else {
+                chrome.runtime.sendMessage({
+                  type: 'metaPrompt',
+                  prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
+                }, 
+                (improveResp) => {
+                  // Check for chrome runtime errors
+                  if (chrome.runtime.lastError) {
+                    console.error('Chrome runtime error:', chrome.runtime.lastError);
+                    showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
+                    if (activePromptPanel) {
+                      activePromptPanel.overlay.remove();
+                      activePromptPanel = null;
+                    }
+                    return;
+                  }
+                  
+                  // Check for API errors in improvement response
+                  if (improveResp && improveResp.error) {
+                    switch (improveResp.error) {
+                      case 'NO_API_KEY':
+                        showApiKeyError();
+                        break;
+                      case 'NO_INTERNET':
+                        showInternetError();
+                        break;
+                      case 'RATE_LIMIT':
+                        showError('RATE_LIMIT');
+                        break;
+                      case 'INVALID_RESPONSE':
+                        showError('INVALID_RESPONSE');
+                        break;
+                      default:
+                        showError('API_ERROR', improveResp.error);
+                    }
+                    if (activePromptPanel) {
+                      activePromptPanel.overlay.remove();
+                      activePromptPanel = null;
+                    }
+                    return;
+                  }
+                  
+                  improveResp = handleMetaPrompt(improveResp);
+                  console.log(improveResp);
+                  if (improveResp) {
+                    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+                      element.value = improveResp;
+                    } else if (element.isContentEditable) {
+                      element.innerText = improveResp;
+                    }
+                  } else {
+                    showError('INVALID_RESPONSE', 'Failed to process the improved prompt.');
+                  }
+                  if (activePromptPanel) {
+                    activePromptPanel.overlay.remove();
+                    activePromptPanel = null;
+                  }
+                });
+              }
+            }
+            activePromptPanel = createPromptReviewPanel({
+              question: response.questions[0],
+              onAnswer: handleAnswer
+            });
+            document.body.appendChild(activePromptPanel.overlay);
+          } else {
+            showError('INVALID_RESPONSE', 'Failed to generate improvement questions. Please try again.');
+          }
+        });
       }
     });
   };
