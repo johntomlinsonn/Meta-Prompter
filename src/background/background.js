@@ -27,16 +27,13 @@ async function getMetaPrompt(userPrompt) {
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
   
-  // Initialize storage with default values
-  chrome.storage.sync.set({ 
-    settings: {
-      enabled: true,
-      theme: 'light',
-      enhancementLevel: 'moderate', // Controls how aggressively prompts are enhanced
-      autoApply: false // Whether to auto-apply suggestions or just show them
-    } 
-  }, () => {
-    console.log('Default settings saved');
+  // Initialize storage with default enhancement level
+  chrome.storage.sync.get(['enhancementLevel'], (result) => {
+    if (!result.enhancementLevel) {
+      chrome.storage.sync.set({ enhancementLevel: 'moderate' }, () => {
+        console.log('Default enhancement level saved');
+      });
+    }
   });
 });
 
@@ -46,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle different message types
   if (message.type === 'getData') {
-    chrome.storage.sync.get('settings', (data) => {
+    chrome.storage.sync.get(['enhancementLevel'], (data) => {
       sendResponse(data);
     });
     return true; // Required for async response

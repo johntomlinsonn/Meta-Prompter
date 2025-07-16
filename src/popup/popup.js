@@ -11,10 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Enhancement level
   const enhancementLevel = document.getElementById('enhancementLevel');
-  enhancementLevel.addEventListener('change', (e) => {
-    localStorage.setItem('enhancementLevel', e.target.value);
+  
+  // Load saved enhancement level from Chrome storage
+  chrome.storage.sync.get(['enhancementLevel'], (result) => {
+    enhancementLevel.value = result.enhancementLevel || 'moderate';
   });
-  enhancementLevel.value = localStorage.getItem('enhancementLevel') || 'moderate';
+  
+  enhancementLevel.addEventListener('change', (e) => {
+    // Save to Chrome storage instead of localStorage
+    chrome.storage.sync.set({ enhancementLevel: e.target.value }, () => {
+      console.log('Enhancement level saved:', e.target.value);
+    });
+  });
 
   // Status indicator
   function setStatus(enabled) {
