@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Chrome Extension",
+  "name": "Meta-Prompter",
   "version": "1.0.0",
-  "description": "A Chrome extension created with a structured source directory",
+  "description": "An AI-powered Chrome extension that enhances your prompts with intelligent suggestions and improvements",
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_popup": "src/popup/popup.html",
