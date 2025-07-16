@@ -273,19 +273,24 @@ export function createPromptReviewPanel({
   const inputField = inputArea.querySelector('.mprp-input-field');
   const sendBtn = inputArea.querySelector('.mprp-send-btn');
 
-  // Send handler
-  sendBtn.addEventListener('click', () => {
+  // Define handlers as named functions so they can be removed later
+  function sendBtnClickHandler() {
     if (inputField.value.trim()) {
       if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
       inputField.value = '';
     }
-  });
-  inputField.addEventListener('keydown', (e) => {
+  }
+  
+  function inputFieldKeydownHandler(e) {
     if (e.key === 'Enter' && inputField.value.trim()) {
       if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
       inputField.value = '';
     }
-  });
+  }
+
+  // Send handler
+  sendBtn.addEventListener('click', sendBtnClickHandler);
+  inputField.addEventListener('keydown', inputFieldKeydownHandler);
 
   questionArea.appendChild(inputArea);
 
@@ -302,16 +307,35 @@ export function createPromptReviewPanel({
   overlay.appendChild(sidebar);
 
   // API for updating question
-  function setQuestion(newQ) {
-    questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${newQ}`;
+  function setQuestion(newQ, isSecondRound = false) {
+    if (isSecondRound) {
+      questionLabel.textContent = `Thanks for your answers! Let's dig deeper to further refine your prompt. ${newQ}`;
+    } else {
+      questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${newQ}`;
+    }
     inputField.value = '';
     inputField.focus();
+  }
+  
+  // API for updating the answer handler
+  function updateAnswerHandler(newHandler) {
+    // Remove old event listeners
+    sendBtn.removeEventListener('click', sendBtnClickHandler);
+    inputField.removeEventListener('keydown', inputFieldKeydownHandler);
+    
+    // Update onAnswer reference
+    onAnswer = newHandler;
+    
+    // Reattach event listeners with the new handler
+    sendBtn.addEventListener('click', sendBtnClickHandler);
+    inputField.addEventListener('keydown', inputFieldKeydownHandler);
   }
 
   return {
     overlay,
     panel: sidebar,
     setQuestion,
+    updateAnswerHandler,
     close: () => overlay.remove()
   };
 }

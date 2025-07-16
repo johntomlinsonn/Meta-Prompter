@@ -132,71 +132,171 @@ function injectMetaPromptButton(element) {
           
           if (response && response.questions && Array.isArray(response.questions) && response.questions.length > 0) {
             let qaPairs = [];
+            let secondRoundQaPairs = [];
             let currentQuestionIndex = 0;
+            const enhancementLevel = result.enhancementLevel || 'moderate';
+            
             function handleAnswer(answer) {
               qaPairs.push({ question: response.questions[currentQuestionIndex], answer });
               currentQuestionIndex++;
               if (currentQuestionIndex < response.questions.length) {
                 activePromptPanel.setQuestion(response.questions[currentQuestionIndex]);
               } else {
-                chrome.runtime.sendMessage({
-                  type: 'metaPrompt',
-                  prompt: value + "Here are questions and answers that the user has answered. Please improve the prompt based on the user's answers." + JSON.stringify(qaPairs),
-                }, 
-                (improveResp) => {
-                  // Check for chrome runtime errors
-                  if (chrome.runtime.lastError) {
-                    console.error('Chrome runtime error:', chrome.runtime.lastError);
-                    showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
-                    if (activePromptPanel) {
-                      activePromptPanel.overlay.remove();
-                      activePromptPanel = null;
-                    }
-                    return;
-                  }
+                // All questions for first round answered
+                
+                // For aggressive/high enhancement, start second round of questions
+                if (enhancementLevel === 'aggressive') {
+                  // Create a message summarizing the first round of answers
+                  const contextMessage = `Original prompt: "${value}"\n\nThe user has answered the following clarifying questions:\n${qaPairs.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n')}\n\n`;
                   
-                  // Check for API errors in improvement response
-                  if (improveResp && improveResp.error) {
-                    switch (improveResp.error) {
-                      case 'NO_API_KEY':
-                        showApiKeyError();
-                        break;
-                      case 'NO_INTERNET':
-                        showInternetError();
-                        break;
-                      case 'RATE_LIMIT':
-                        showError('RATE_LIMIT');
-                        break;
-                      case 'INVALID_RESPONSE':
-                        showError('INVALID_RESPONSE');
-                        break;
-                      default:
-                        showError('API_ERROR', improveResp.error);
+                  // Generate second round of questions based on first round answers
+                  chrome.runtime.sendMessage({
+                    type: 'generatePromptQuestions',
+                    prompt: contextMessage + "Based on these answers, please generate more specific follow-up questions to further refine the prompt."
+                  }, (secondResponse) => {
+                    // Check for errors
+                    if (chrome.runtime.lastError) {
+                      console.error('Chrome runtime error:', chrome.runtime.lastError);
+                      showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
+                      if (activePromptPanel) {
+                        activePromptPanel.overlay.remove();
+                        activePromptPanel = null;
+                      }
+                      return;
                     }
-                    if (activePromptPanel) {
-                      activePromptPanel.overlay.remove();
-                      activePromptPanel = null;
+                    
+                    if (secondResponse && secondResponse.error) {
+                      switch (secondResponse.error) {
+                        case 'NO_API_KEY':
+                          showApiKeyError();
+                          break;
+                        case 'NO_INTERNET':
+                          showInternetError();
+                          break;
+                        case 'RATE_LIMIT':
+                          showError('RATE_LIMIT');
+                          break;
+                        case 'INVALID_RESPONSE':
+                          showError('INVALID_RESPONSE');
+                          break;
+                        default:
+                          showError('API_ERROR', secondResponse.error);
+                      }
+                      if (activePromptPanel) {
+                        activePromptPanel.overlay.remove();
+                        activePromptPanel = null;
+                      }
+                      return;
                     }
-                    return;
+                    
+                    // Process second round questions
+                    if (secondResponse && secondResponse.questions && Array.isArray(secondResponse.questions) && secondResponse.questions.length > 0) {
+                      currentQuestionIndex = 0;
+                      
+                      // Update the question handler to handle second round questions
+                      function handleSecondRoundAnswer(answer) {
+                        secondRoundQaPairs.push({ question: secondResponse.questions[currentQuestionIndex], answer });
+                        currentQuestionIndex++;
+                        
+                        if (currentQuestionIndex < secondResponse.questions.length) {
+                          // Show next question, indicating it's from the second round
+                          activePromptPanel.setQuestion(secondResponse.questions[currentQuestionIndex], true);
+                        } else {
+                          // All second round questions answered, generate final prompt
+                          generateFinalPrompt();
+                        }
+                      }
+                      
+                      // Update the panel with new questions and handler
+                      activePromptPanel.setQuestion(secondResponse.questions[0], true);
+                      activePromptPanel.updateAnswerHandler(handleSecondRoundAnswer);
+                      
+                    } else {
+                      // If second round questions failed, fall back to using just first round
+                      generateFinalPrompt();
+                    }
+                  });
+                } else {
+                  // For moderate enhancement, proceed directly to prompt generation
+                  generateFinalPrompt();
+                }
+              }
+            }
+            
+            function generateFinalPrompt() {
+              // Create the prompt enhancement request
+              let enhancementPrompt = value;
+              
+              // Add first round Q&A
+              if (qaPairs.length > 0) {
+                enhancementPrompt += "\n\nHere are questions and answers that the user has provided to help improve the prompt:\n" + 
+                  JSON.stringify(qaPairs.map(qa => ({question: qa.question, answer: qa.answer})));
+              }
+              
+              // Add second round Q&A if available
+              if (secondRoundQaPairs.length > 0) {
+                enhancementPrompt += "\n\nHere are follow-up questions and answers that provide additional context:\n" + 
+                  JSON.stringify(secondRoundQaPairs.map(qa => ({question: qa.question, answer: qa.answer})));
+              }
+              
+              // Send the final prompt for improvement
+              chrome.runtime.sendMessage({
+                type: 'metaPrompt',
+                prompt: enhancementPrompt
+              }, 
+              (improveResp) => {
+                // Check for chrome runtime errors
+                if (chrome.runtime.lastError) {
+                  console.error('Chrome runtime error:', chrome.runtime.lastError);
+                  showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
+                  if (activePromptPanel) {
+                    activePromptPanel.overlay.remove();
+                    activePromptPanel = null;
                   }
-                  
-                  improveResp = handleMetaPrompt(improveResp);
-                  console.log(improveResp);
-                  if (improveResp) {
-                    if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-                      element.value = improveResp;
-                    } else if (element.isContentEditable) {
-                      element.innerText = improveResp;
-                    }
-                  } else {
-                    showError('INVALID_RESPONSE', 'Failed to process the improved prompt.');
+                  return;
+                }
+                
+                // Check for API errors in improvement response
+                if (improveResp && improveResp.error) {
+                  switch (improveResp.error) {
+                    case 'NO_API_KEY':
+                      showApiKeyError();
+                      break;
+                    case 'NO_INTERNET':
+                      showInternetError();
+                      break;
+                    case 'RATE_LIMIT':
+                      showError('RATE_LIMIT');
+                      break;
+                    case 'INVALID_RESPONSE':
+                      showError('INVALID_RESPONSE');
+                      break;
+                    default:
+                      showError('API_ERROR', improveResp.error);
                   }
                   if (activePromptPanel) {
                     activePromptPanel.overlay.remove();
                     activePromptPanel = null;
                   }
-                });
-              }
+                  return;
+                }
+                
+                improveResp = handleMetaPrompt(improveResp);
+                console.log(improveResp);
+                if (improveResp) {
+                  if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+                    element.value = improveResp;
+                  } else if (element.isContentEditable) {
+                    element.innerText = improveResp;
+                  }
+                } else {
+                  showError('INVALID_RESPONSE', 'Failed to process the improved prompt.');
+                }
+                if (activePromptPanel) {
+                  activePromptPanel.overlay.remove();
+                  activePromptPanel = null;
+                }
+              });
             }
             activePromptPanel = createPromptReviewPanel({
               question: response.questions[0],
