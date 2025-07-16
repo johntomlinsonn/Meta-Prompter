@@ -1,11 +1,6 @@
 import './popup.css';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Always use light theme
-  document.documentElement.setAttribute('data-theme', 'light');
-  document.getElementById('themeSelect').value = 'light';
-  document.getElementById('themeSelect').disabled = true;
-
   // API Key show/hide
   const apiKeyInput = document.getElementById('apiKey');
   const toggleApiKey = document.getElementById('toggleApiKey');
@@ -20,18 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('enhancementLevel', e.target.value);
   });
   enhancementLevel.value = localStorage.getItem('enhancementLevel') || 'moderate';
-
-  // Checkboxes
-  const autoApply = document.getElementById('autoApply');
-  const showNotifications = document.getElementById('showNotifications');
-  autoApply.checked = localStorage.getItem('autoApply') !== 'false';
-  showNotifications.checked = localStorage.getItem('showNotifications') === 'true';
-  autoApply.addEventListener('change', (e) => {
-    localStorage.setItem('autoApply', e.target.checked);
-  });
-  showNotifications.addEventListener('change', (e) => {
-    localStorage.setItem('showNotifications', e.target.checked);
-  });
 
   // Status indicator
   function setStatus(enabled) {

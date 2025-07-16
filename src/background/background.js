@@ -62,18 +62,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
             if (result.apiKey) {
               storedApiKey = result.apiKey;
-              const client = new Cerebras(
-                                          { apiKey: storedApiKey 
-                                          });
-              const metaPrompt = await getMetaPrompt(message.prompt);
-              const completionCreateResponse = await client.chat.completions.create({
-                messages: [{ role: 'user', content: metaPrompt }],
-                model: 'llama-4-scout-17b-16e-instruct',
-              });
-              console.log('Cerebras AI response:', completionCreateResponse);
-              sendResponse({ result: completionCreateResponse });
+              try {
+                const client = new Cerebras({ apiKey: storedApiKey });
+                const metaPrompt = await getMetaPrompt(message.prompt);
+                const completionCreateResponse = await client.chat.completions.create({
+                  messages: [{ role: 'user', content: metaPrompt }],
+                  model: 'llama-4-scout-17b-16e-instruct',
+                });
+                console.log('Cerebras AI response:', completionCreateResponse);
+                sendResponse({ result: completionCreateResponse });
+              } catch (error) {
+                console.error('Cerebras API error:', error);
+                // Provide specific error types for better error handling
+                if (error.message.includes('API key') || error.message.includes('authentication')) {
+                  sendResponse({ error: 'NO_API_KEY' });
+                } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                  sendResponse({ error: 'NO_INTERNET' });
+                } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+                  sendResponse({ error: 'RATE_LIMIT' });
+                } else {
+                  sendResponse({ error: 'INVALID_RESPONSE' });
+                }
+              }
             } else {
-              sendResponse({ error: 'API key not set.' });
+              sendResponse({ error: 'NO_API_KEY' });
             }
           });
           return;
@@ -88,7 +100,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ result: completionCreateResponse });
       } catch (error) {
         console.error('Cerebras API error:', error);
-        sendResponse({ error: error.message });
+        // Provide specific error types for better error handling
+        if (error.message.includes('API key') || error.message.includes('authentication')) {
+          sendResponse({ error: 'NO_API_KEY' });
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          sendResponse({ error: 'NO_INTERNET' });
+        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+          sendResponse({ error: 'RATE_LIMIT' });
+        } else {
+          sendResponse({ error: 'INVALID_RESPONSE' });
+        }
       }
     })();
     return true; // Indicates async response
@@ -111,27 +132,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           chrome.storage.local.get('apiKey', async (result) => {
             if (result.apiKey) {
               storedApiKey = result.apiKey;
-              const client = new Cerebras({ apiKey: storedApiKey });
-              const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
-              const completion = await client.chat.completions.create({
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user', content: message.prompt }
-                ],
-                model: 'llama-4-scout-17b-16e-instruct',
-              });
-              const text = completion.choices[0].message.content;
-              let questions = [];
               try {
-                questions = JSON.parse(text);
-              } catch (e) {
-                // fallback: try to extract JSON array
-                const match = text.match(/\[.*\]/s);
-                if (match) questions = JSON.parse(match[0]);
+                const client = new Cerebras({ apiKey: storedApiKey });
+                const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
+                const completion = await client.chat.completions.create({
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: message.prompt }
+                  ],
+                  model: 'llama-4-scout-17b-16e-instruct',
+                });
+                const text = completion.choices[0].message.content;
+                let questions = [];
+                try {
+                  questions = JSON.parse(text);
+                } catch (e) {
+                  // fallback: try to extract JSON array
+                  const match = text.match(/\[.*\]/s);
+                  if (match) questions = JSON.parse(match[0]);
+                }
+                sendResponse({ questions });
+              } catch (error) {
+                console.error('Cerebras API error:', error);
+                if (error.message.includes('API key') || error.message.includes('authentication')) {
+                  sendResponse({ error: 'NO_API_KEY' });
+                } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                  sendResponse({ error: 'NO_INTERNET' });
+                } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+                  sendResponse({ error: 'RATE_LIMIT' });
+                } else {
+                  sendResponse({ error: 'INVALID_RESPONSE' });
+                }
               }
-              sendResponse({ questions });
             } else {
-              sendResponse({ error: 'API key not set.' });
+              sendResponse({ error: 'NO_API_KEY' });
             }
           });
           return;
@@ -156,7 +190,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ questions });
       } catch (error) {
-        sendResponse({ error: error.message });
+        console.error('Cerebras API error:', error);
+        if (error.message.includes('API key') || error.message.includes('authentication')) {
+          sendResponse({ error: 'NO_API_KEY' });
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          sendResponse({ error: 'NO_INTERNET' });
+        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+          sendResponse({ error: 'RATE_LIMIT' });
+        } else {
+          sendResponse({ error: 'INVALID_RESPONSE' });
+        }
       }
     })();
     return true;

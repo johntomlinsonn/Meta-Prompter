@@ -6,45 +6,57 @@
   font-family: 'Inter', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 :root {
-  --bg-primary: #f9fafb;
-  --bg-secondary: #f1f5ff;
-  --bg-tertiary: #e0e7ff;
-  --text-primary: #1e293b;
-  --text-secondary: #6366f1;
-  --text-muted: #64748b;
-  --border-color: #e0e7ff;
-  --border-hover: #a5b4fc;
-  --accent-primary: #6366f1;
-  --accent-hover: #7c3aed;
-  --accent-light: #e0e7ff;
-  --success-color: #10b981;
-  --warning-color: #fbbf24;
+  --bg-primary: rgba(255,255,255,0.05);
+  --bg-secondary: rgba(255,255,255,0.2);
+  --bg-tertiary: rgba(255,255,255,0.25);
+  --text-primary: #fff;
+  --text-secondary: #fff;
+  --text-muted: rgba(255,255,255,0.7);
+  --border-color: rgba(255,255,255,0.2);
+  --border-hover: rgba(255,255,255,0.4);
+  --accent-primary: rgba(255,255,255,0.15);
+  --accent-hover: rgba(255,255,255,0.25);
+  --accent-light: rgba(255,255,255,0.1);
+  --success-color: #3b82f6;
+  --warning-color: #6366f1;
   --danger-color: #ef4444;
-  --shadow-md: 0 4px 16px 0 rgb(99 102 241 / 0.12);
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  --input-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 body, html, .popup-container {
-  background: linear-gradient(135deg, #f1f5ff 0%, #f9fafb 100%);
+  background: transparent;
   color: var(--text-primary);
 }
 .popup-container {
   width: 380px;
-  min-height: 500px;
-  background-color: var(--bg-primary);
+  max-width: 380px;
+  min-width: 380px;
+  min-height: auto;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
 }
 .header {
-  background: linear-gradient(90deg, #6366f1 0%, #06b6d4 100%);
-  color: #fff;
+  background: var(--bg-secondary);
+  color: #000;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.1), 0 1px 4px 0 rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
 }
 .logo-section {
   display: flex;
@@ -59,31 +71,38 @@ body, html, .popup-container {
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
 }
 .logo-icon img {
   filter: drop-shadow(0 2px 8px rgba(99,102,241,0.10));
 }
 .title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  color: #000;
 }
 .status-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(90deg, #fbbf24 0%, #ec4899 100%);
+  background: var(--bg-tertiary);
   padding: 6px 12px;
   border-radius: 20px;
-  color: #fff;
-  font-weight: 600;
+  color: #000;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
 }
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--success-color);
+  background-color: #3b82f6;
   animation: pulse 2s infinite;
 }
 .status-text {
@@ -95,7 +114,6 @@ body, html, .popup-container {
   50% { opacity: 0.5; }
 }
 .main-content {
-  flex: 1;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -111,13 +129,13 @@ body, html, .popup-container {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 500;
+  color: #000;
   margin-bottom: 4px;
 }
 .section-label svg {
-  color: var(--warning-color);
-  fill: var(--warning-color);
+  color: #6366f1;
+  fill: #6366f1;
   vertical-align: middle;
 }
 .input-group {
@@ -129,57 +147,65 @@ body, html, .popup-container {
   width: 100%;
   padding: 12px 16px;
   padding-right: 48px;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background-color: #fff;
-  color: var(--text-primary);
+  background: var(--bg-secondary);
+  color: #000;
   font-size: 15px;
-  font-weight: 500;
-  transition: border 0.2s, box-shadow 0.2s;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--input-shadow);
 }
 .input-field:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px var(--accent-light);
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
+  box-shadow: var(--input-shadow), 0 0 0 2px rgba(99, 102, 241, 0.1);
   outline: none;
 }
 .input-field::placeholder {
-  color: var(--text-muted);
+  color: #666;
 }
 .toggle-visibility {
   position: absolute;
   right: 12px;
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: #6366f1;
   cursor: pointer;
   padding: 4px;
   border-radius: var(--radius-md);
-  transition: color 0.2s, background 0.2s;
+  transition: all 0.2s ease;
 }
 .toggle-visibility:hover {
-  color: var(--accent-primary);
-  background-color: var(--bg-tertiary);
+  color: #3b82f6;
+  background: var(--accent-light);
 }
 .select-field {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--bg-secondary);
+  color: #000;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
-  transition: border 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 12px center;
   background-repeat: no-repeat;
   background-size: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--input-shadow);
 }
 .select-field:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px var(--accent-light);
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
+  box-shadow: var(--input-shadow), 0 0 0 2px rgba(99, 102, 241, 0.1);
   outline: none;
 }
 .option-group {
@@ -192,9 +218,9 @@ body, html, .popup-container {
   gap: 12px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--text-primary);
+  color: #000;
   padding: 8px 0;
-  font-weight: 500;
+  font-weight: 400;
 }
 .checkbox-input {
   display: none;
@@ -202,15 +228,17 @@ body, html, .popup-container {
 .checkbox-custom {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--bg-secondary);
   position: relative;
-  transition: border 0.2s, background 0.2s;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .checkbox-input:checked + .checkbox-custom {
-  background: var(--warning-color);
-  border-color: var(--warning-color);
+  background: #3b82f6;
+  border-color: #2563eb;
 }
 .checkbox-input:checked + .checkbox-custom::after {
   content: "";
@@ -224,53 +252,58 @@ body, html, .popup-container {
   transform: rotate(45deg);
 }
 .checkbox-label:hover .checkbox-custom {
-  border-color: var(--accent-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
 }
 .checkbox-text {
   user-select: none;
 }
 .actions {
   padding: 20px 24px;
-  background-color: var(--bg-secondary);
+  background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
   display: flex;
   gap: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .btn {
   flex: 1;
   padding: 12px 20px;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 8px 0 rgb(99 102 241 / 0.10);
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .btn-primary {
-  background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%);
-  color: #fff;
+  background: var(--bg-tertiary);
+  color: #000;
+  border-color: var(--border-color);
 }
 .btn-primary:hover, .btn-primary:focus {
-  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
-  color: #fff;
-  box-shadow: 0 6px 24px 0 rgb(99 102 241 / 0.18);
+  background: var(--accent-hover);
+  border-color: var(--border-hover);
+  color: #000;
   outline: none;
 }
 .btn-secondary {
-  background: #fff;
-  color: #6366f1;
-  border: 1.5px solid #a5b4fc;
-  box-shadow: 0 2px 8px 0 rgb(99 102 241 / 0.08);
+  background: var(--bg-secondary);
+  color: #000;
+  border: 1px solid var(--border-color);
 }
 .btn-secondary:hover, .btn-secondary:focus {
-  background: #fbbf24;
-  color: #fff;
-  border-color: #f59e42;
+  background: var(--bg-tertiary);
+  color: #000;
+  border-color: var(--border-hover);
   outline: none;
 }
 .btn:active {
@@ -280,8 +313,8 @@ body, html, .popup-container {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #fff;
-  border-top: 2px solid #6366f1;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top: 2px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-right: 8px;
@@ -291,7 +324,7 @@ body, html, .popup-container {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@media (max-width: 400px) {
+@media (max-width: 320px) {
   .popup-container {
     width: 100vw;
     min-height: 100vh;
