@@ -31,7 +31,9 @@ body, html, .popup-container {
 }
 .popup-container {
   width: 380px;
-  min-height: 500px;
+  max-width: 380px;
+  min-width: 380px;
+  min-height: auto;
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -112,7 +114,6 @@ body, html, .popup-container {
   50% { opacity: 0.5; }
 }
 .main-content {
-  flex: 1;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -323,7 +324,7 @@ body, html, .popup-container {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@media (max-width: 400px) {
+@media (max-width: 320px) {
   .popup-container {
     width: 100vw;
     min-height: 100vh;
