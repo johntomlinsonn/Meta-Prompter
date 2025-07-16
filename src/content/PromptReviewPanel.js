@@ -22,6 +22,91 @@ export function createPromptReviewPanel({
   // Create overlay and sidebar
   const overlay = document.createElement('div');
   overlay.className = 'mprp-overlay';
+  // Function to determine if background is dark
+  function getAdaptiveColors() {
+    // Sample the background color behind the panel
+    const body = document.body;
+    const html = document.documentElement;
+    
+    // Get computed styles
+    const bodyStyles = window.getComputedStyle(body);
+    const htmlStyles = window.getComputedStyle(html);
+    
+    // Check various background properties
+    const bodyBg = bodyStyles.backgroundColor;
+    const htmlBg = htmlStyles.backgroundColor;
+    const bodyBgImage = bodyStyles.backgroundImage;
+    
+    // Function to parse RGB values and calculate luminance
+    function getLuminance(color) {
+      if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return null;
+      
+      const rgb = color.match(/\d+/g);
+      if (!rgb || rgb.length < 3) return null;
+      
+      const [r, g, b] = rgb.map(x => {
+        x = parseInt(x) / 255;
+        return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+      });
+      
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+    
+    // Check if we can determine the background luminance
+    let luminance = getLuminance(bodyBg) || getLuminance(htmlBg);
+    
+    // If we can't determine from solid colors, check for common dark/light themes
+    const isDarkTheme = 
+      body.classList.contains('dark') ||
+      body.classList.contains('dark-theme') ||
+      html.classList.contains('dark') ||
+      html.classList.contains('dark-theme') ||
+      bodyBg.includes('rgb(0') || bodyBg.includes('rgb(1') || bodyBg.includes('rgb(2') ||
+      bodyBgImage.includes('gradient') && bodyBg.includes('rgb(0');
+    
+    const isLightTheme = 
+      body.classList.contains('light') ||
+      body.classList.contains('light-theme') ||
+      html.classList.contains('light') ||
+      html.classList.contains('light-theme');
+    
+    // Determine if background is dark
+    let isDark;
+    if (luminance !== null) {
+      isDark = luminance < 0.5;
+    } else if (isDarkTheme) {
+      isDark = true;
+    } else if (isLightTheme) {
+      isDark = false;
+    } else {
+      // Default fallback - assume light theme
+      isDark = false;
+    }
+    
+    // Return appropriate colors
+    if (isDark) {
+      return {
+        textColor: '#ffffff',
+        textColorSecondary: 'rgba(255, 255, 255, 0.8)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColorHover: 'rgba(0, 0, 0, 0.5)',
+        placeholderColor: 'rgba(255, 255, 255, 0.6)'
+      };
+    } else {
+      return {
+        textColor: '#1f2937',
+        textColorSecondary: 'rgba(31, 41, 55, 0.8)',
+        borderColor: 'rgba(0, 0, 0, 0.2)',
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColorHover: 'rgba(255, 255, 255, 0.5)',
+        placeholderColor: 'rgba(31, 41, 55, 0.6)'
+      };
+    }
+  }
+  
+  const colors = getAdaptiveColors();
+  
   overlay.innerHTML = `
     <style>
       .mprp-overlay {
@@ -36,13 +121,13 @@ export function createPromptReviewPanel({
       .mprp-sidebar {
         width: 100%;
         height: 100vh;
-        background: rgba(255,255,255,0.05);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        background: ${colors.backgroundColor};
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         border-radius: 0;
         display: flex;
         flex-direction: column;
         animation: mprp-slide-in 0.25s cubic-bezier(.4,1.4,.6,1) 1;
-        border-left: 1px solid rgba(255,255,255,0.1);
+        border-left: 1px solid ${colors.borderColor};
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-right: none;
@@ -57,23 +142,21 @@ export function createPromptReviewPanel({
         padding: 20px 24px 14px 24px;
         font-size: 18px;
         font-weight: 500;
-        color: #fff;
-        mix-blend-mode: difference;
-        background: rgba(255,255,255,0.05);
+        color: ${colors.textColor};
+        background: ${colors.backgroundColor};
         border-radius: 0;
         letter-spacing: -0.3px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid ${colors.borderColor};
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
       }
       .mprp-close {
         background: none;
         border: none;
-        color: #fff;
-        mix-blend-mode: difference;
+        color: ${colors.textColor};
         font-size: 20px;
         cursor: pointer;
         padding: 4px 8px;
@@ -81,9 +164,8 @@ export function createPromptReviewPanel({
         transition: all 0.2s ease;
       }
       .mprp-close:hover {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        mix-blend-mode: difference;
+        background: ${colors.backgroundColorHover};
+        color: ${colors.textColor};
       }
       .mprp-question-area {
         flex: 1;
@@ -96,15 +178,14 @@ export function createPromptReviewPanel({
       }
       .mprp-question-label {
         font-size: 16px;
-        color: #fff;
-        mix-blend-mode: difference;
+        color: ${colors.textColor};
         font-weight: 400;
         margin-bottom: 24px;
         text-align: center;
-        background: rgba(255,255,255,0.1);
+        background: ${colors.backgroundColor};
         border-radius: 8px;
         padding: 16px;
-        border: 1px solid rgba(255,255,255,0.15);
+        border: 1px solid ${colors.borderColor};
         max-width: 90%;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -121,11 +202,10 @@ export function createPromptReviewPanel({
       .mprp-input-field {
         flex: 1;
         padding: 12px 16px;
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid ${colors.borderColor};
         border-radius: 8px;
-        background-color: rgba(255,255,255,0.1);
-        color: #fff;
-        mix-blend-mode: difference;
+        background-color: ${colors.backgroundColor};
+        color: ${colors.textColor};
         font-size: 15px;
         font-weight: 400;
         transition: all 0.2s ease;
@@ -133,21 +213,18 @@ export function createPromptReviewPanel({
         -webkit-backdrop-filter: blur(10px);
       }
       .mprp-input-field:focus {
-        border-color: rgba(255,255,255,0.4);
-        background-color: rgba(255,255,255,0.15);
-        color: #fff;
-        mix-blend-mode: difference;
+        border-color: ${colors.textColorSecondary};
+        background-color: ${colors.backgroundColorHover};
+        color: ${colors.textColor};
         outline: none;
       }
       .mprp-input-field::placeholder {
-        color: rgba(255,255,255,0.7);
-        mix-blend-mode: difference;
+        color: ${colors.placeholderColor};
       }
       .mprp-send-btn {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        mix-blend-mode: difference;
-        border: 1px solid rgba(255,255,255,0.3);
+        background: ${colors.backgroundColor};
+        color: ${colors.textColor};
+        border: 1px solid ${colors.borderColor};
         border-radius: 8px;
         font-size: 15px;
         font-weight: 500;
@@ -158,10 +235,9 @@ export function createPromptReviewPanel({
         -webkit-backdrop-filter: blur(10px);
       }
       .mprp-send-btn:hover, .mprp-send-btn:focus {
-        background: rgba(255,255,255,0.25);
-        color: #fff;
-        mix-blend-mode: difference;
-        border-color: rgba(255,255,255,0.5);
+        background: ${colors.backgroundColorHover};
+        color: ${colors.textColor};
+        border-color: ${colors.textColorSecondary};
         outline: none;
       }
     </style>
