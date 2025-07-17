@@ -320,12 +320,29 @@ function positionButton(button, element) {
   const rect = element.getBoundingClientRect();
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-  const buttonSize = 24;
-  const padding = 4;
+  const buttonSize = 28; // Updated to match actual button size
+  const verticalOffset = 8; // Distance above the text box
+  const horizontalOffset = 8; // Distance to the right of the text box
   let top, left;
-  // Place in the top right corner of the input/textarea/contenteditable
-  top = rect.top + scrollTop + padding;
-  left = rect.right + scrollLeft - buttonSize - padding;
+  
+  // Position the button above and to the right of the text box
+  top = rect.top + scrollTop - buttonSize - verticalOffset;
+  left = rect.right + scrollLeft + horizontalOffset;
+  
+  // Ensure the button doesn't go off-screen
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  // Adjust horizontal position if it would go off the right edge
+  if (left + buttonSize > viewportWidth + scrollLeft) {
+    left = rect.left + scrollLeft - buttonSize - horizontalOffset;
+  }
+  
+  // Adjust vertical position if it would go above the viewport
+  if (top < scrollTop) {
+    top = rect.bottom + scrollTop + verticalOffset;
+  }
+  
   button.style.top = `${top}px`;
   button.style.left = `${left}px`;
 }

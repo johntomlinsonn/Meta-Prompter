@@ -71,15 +71,42 @@ export function createMetaPromptButton(element, onClick) {
     z-index: 10000;
     transition: border-color 0.2s, background 0.2s;
   `;
+  // Store original styles to restore later
+  let originalBackgroundColor = '';
+  let originalColor = '';
+  
   button.addEventListener('mouseenter', () => {
     button.style.background = '#e8f0fe';
     button.style.borderColor = '#4285f4';
     tooltip.style.opacity = '1';
+    
+    // Highlight the referenced text element with pastel yellow and black text
+    if (element) {
+      // Store the original styles if not already stored
+      if (!originalBackgroundColor) {
+        const computedStyle = window.getComputedStyle(element);
+        originalBackgroundColor = computedStyle.backgroundColor;
+        originalColor = computedStyle.color;
+      }
+      element.style.transition = 'background-color 0.2s ease, color 0.2s ease';
+      element.style.backgroundColor = '#fff9c4'; // Pastel yellow
+      element.style.color = '#000000'; // Black text
+    }
   });
   button.addEventListener('mouseleave', () => {
     button.style.background = '#fff';
     button.style.borderColor = '#d3e3fd';
     tooltip.style.opacity = '0';
+    
+    // Remove highlight from the referenced text element
+    if (element) {
+      element.style.backgroundColor = originalBackgroundColor || '';
+      element.style.color = originalColor || '';
+      // Remove the transition after a short delay to prevent flickering
+      setTimeout(() => {
+        element.style.transition = '';
+      }, 200);
+    }
   });
   button.addEventListener('focus', () => {});
   button.addEventListener('blur', () => {});
