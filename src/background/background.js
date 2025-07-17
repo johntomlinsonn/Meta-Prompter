@@ -140,6 +140,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'getApiKey') {
     sendResponse({ apiKey: storedApiKey });
   }
+  if (message.action === 'clearApiKey') {
+    storedApiKey = null;
+    sendResponse({ success: true });
+  }
 
  
   if (message.type === 'generatePromptQuestions') {
