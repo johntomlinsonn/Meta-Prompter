@@ -1,12 +1,35 @@
 import './popup.css';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // API Key show/hide
+  // API Key elements
   const apiKeyInput = document.getElementById('apiKey');
-  const toggleApiKey = document.getElementById('toggleApiKey');
-  toggleApiKey.addEventListener('click', () => {
-    apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
-    toggleApiKey.setAttribute('aria-label', apiKeyInput.type === 'password' ? 'Show API key' : 'Hide API key');
+  const deleteApiKeyBtn = document.getElementById('deleteApiKeyBtn');
+
+  // Load saved API key and show masked version if it exists
+  chrome.storage.sync.get(['apiKey'], (result) => {
+    if (result.apiKey) {
+      // Show masked characters for existing API key
+      apiKeyInput.value = '●'.repeat(24); // Show 24 masked characters
+      apiKeyInput.placeholder = 'API key is saved';
+      deleteApiKeyBtn.style.display = 'block'; // Show delete button
+    } else {
+      apiKeyInput.value = '';
+      apiKeyInput.placeholder = 'Enter your API key...';
+      deleteApiKeyBtn.style.display = 'none'; // Hide delete button
+    }
+  });
+
+
+  // Delete API key functionality
+  deleteApiKeyBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete your API key?')) {
+      chrome.storage.sync.remove(['apiKey'], () => {
+        apiKeyInput.value = '';
+        apiKeyInput.placeholder = 'Enter your API key...';
+        deleteApiKeyBtn.style.display = 'none';
+        console.log('API key deleted');
+      });
+    }
   });
 
   // Enhancement level
@@ -43,9 +66,22 @@ document.addEventListener('DOMContentLoaded', () => {
   saveBtn.addEventListener('click', () => {
     saveBtn.disabled = true;
     const original = saveBtn.innerHTML;
-    // Send API key to background.js
+    
     const apiKey = apiKeyInput.value.trim();
-    chrome.runtime.sendMessage({ action: 'saveApiKey', apiKey });
+    
+    // Only save if user entered an actual API key (not the masked characters)
+    if (apiKey && !apiKey.includes('●')) {
+      // Send API key to background.js and save to storage
+      chrome.runtime.sendMessage({ action: 'saveApiKey', apiKey });
+      chrome.storage.sync.set({ apiKey: apiKey }, () => {
+        // Show masked characters after saving
+        apiKeyInput.value = '●'.repeat(24);
+        apiKeyInput.placeholder = 'API key is saved';
+        deleteApiKeyBtn.style.display = 'block';
+        console.log('API key saved');
+      });
+    }
+    
     saveBtn.innerHTML = 'Saved!';
     setTimeout(() => {
       saveBtn.innerHTML = original;
