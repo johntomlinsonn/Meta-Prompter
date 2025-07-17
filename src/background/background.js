@@ -14,7 +14,7 @@ chrome.storage.local.get('apiKey', (result) => {
 
 
 async function getMetaPrompt(userPrompt) {
-  const response = await fetch(chrome.runtime.getURL('metaprompt.txt'));
+  const response = await fetch(chrome.runtime.getURL('prompt-classification/metaprompt.txt'));
   let metaPrompt = await response.text();
   metaPrompt = metaPrompt.replace(/`\{USER_PROMPT\}`/g, userPrompt);
   return metaPrompt;
