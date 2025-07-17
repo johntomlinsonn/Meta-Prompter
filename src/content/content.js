@@ -4,9 +4,19 @@ import { handleMetaPrompt } from '../utils/helpers.js';
 import { createMetaPromptButton } from './MetaPromptButton.js';
 import { createPromptReviewPanel } from './PromptReviewPanel.js';
 import { showError, ErrorTypes, showApiKeyError, showInternetError, showNoPromptError } from './ErrorNotification.js';
+import { showQuestionsLoading, showPromptLoading } from './LoadingAnimation.js';
 
 let activeInputElement = null;
 let activePromptPanel = null;
+let currentLoadingAnimation = null;
+
+// Helper function to clean up loading animation
+function hideLoadingAnimation() {
+  if (currentLoadingAnimation) {
+    currentLoadingAnimation.hide();
+    currentLoadingAnimation = null;
+  }
+}
 
 function isTextInputElement(element) {
   if (!element) return false;
@@ -48,17 +58,30 @@ function injectMetaPromptButton(element) {
       activePromptPanel.overlay.remove();
       activePromptPanel = null;
     }
+    
+    // Clean up any existing loading animation
+    hideLoadingAnimation();
 
     // Check enhancement level to determine flow
     chrome.storage.sync.get(['enhancementLevel'], (result) => {
       const enhancementLevel = result.enhancementLevel || 'moderate';
       
       if (enhancementLevel === 'light') {
+        // Show loading animation for prompt generation
+        currentLoadingAnimation = showPromptLoading();
+        currentLoadingAnimation.show();
+        
         // For light enhancement, skip questions and go straight to prompt improvement
         chrome.runtime.sendMessage({
           type: 'metaPrompt',
           prompt: value,
         }, (improveResp) => {
+          // Hide loading animation
+          if (currentLoadingAnimation) {
+            currentLoadingAnimation.hide();
+            currentLoadingAnimation = null;
+          }
+          
           // Check for chrome runtime errors
           if (chrome.runtime.lastError) {
             console.error('Chrome runtime error:', chrome.runtime.lastError);
@@ -100,8 +123,18 @@ function injectMetaPromptButton(element) {
           }
         });
       } else {
+        // Show loading animation for questions generation
+        currentLoadingAnimation = showQuestionsLoading();
+        currentLoadingAnimation.show();
+        
         // For moderate and aggressive enhancement, use the question flow
         chrome.runtime.sendMessage({ type: 'generatePromptQuestions', prompt: value }, (response) => {
+          // Hide loading animation
+          if (currentLoadingAnimation) {
+            currentLoadingAnimation.hide();
+            currentLoadingAnimation = null;
+          }
+          
           // Check for chrome runtime errors
           if (chrome.runtime.lastError) {
             console.error('Chrome runtime error:', chrome.runtime.lastError);
@@ -149,11 +182,21 @@ function injectMetaPromptButton(element) {
                   // Create a message summarizing the first round of answers
                   const contextMessage = `Original prompt: "${value}"\n\nThe user has answered the following clarifying questions:\n${qaPairs.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n')}\n\n`;
                   
+                  // Show loading animation for second round questions
+                  currentLoadingAnimation = showQuestionsLoading();
+                  currentLoadingAnimation.show();
+                  
                   // Generate second round of questions based on first round answers
                   chrome.runtime.sendMessage({
                     type: 'generatePromptQuestions',
                     prompt: contextMessage + "Based on these answers, please generate more specific follow-up questions to further refine the prompt."
                   }, (secondResponse) => {
+                    // Hide loading animation
+                    if (currentLoadingAnimation) {
+                      currentLoadingAnimation.hide();
+                      currentLoadingAnimation = null;
+                    }
+                    
                     // Check for errors
                     if (chrome.runtime.lastError) {
                       console.error('Chrome runtime error:', chrome.runtime.lastError);
@@ -224,6 +267,10 @@ function injectMetaPromptButton(element) {
             }
             
             function generateFinalPrompt() {
+              // Show loading animation for final prompt generation
+              currentLoadingAnimation = showPromptLoading();
+              currentLoadingAnimation.show();
+              
               // Create the prompt enhancement request
               let enhancementPrompt = value;
               
@@ -245,6 +292,12 @@ function injectMetaPromptButton(element) {
                 prompt: enhancementPrompt
               }, 
               (improveResp) => {
+                // Hide loading animation
+                if (currentLoadingAnimation) {
+                  currentLoadingAnimation.hide();
+                  currentLoadingAnimation = null;
+                }
+                
                 // Check for chrome runtime errors
                 if (chrome.runtime.lastError) {
                   console.error('Chrome runtime error:', chrome.runtime.lastError);
