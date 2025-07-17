@@ -22,14 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete API key functionality
   deleteApiKeyBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to delete your API key?')) {
-      chrome.storage.sync.remove(['apiKey'], () => {
+    chrome.storage.sync.remove(['apiKey'], () => {
+      chrome.storage.local.remove(['apiKey'], () => {
+        chrome.runtime.sendMessage({ action: 'clearApiKey' });
+        
+        // Update UI
         apiKeyInput.value = '';
         apiKeyInput.placeholder = 'Enter your API key...';
         deleteApiKeyBtn.style.display = 'none';
-        console.log('API key deleted');
       });
-    }
+    });
   });
 
   // Enhancement level
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   enhancementLevel.addEventListener('change', (e) => {
     // Save to Chrome storage instead of localStorage
     chrome.storage.sync.set({ enhancementLevel: e.target.value }, () => {
-      console.log('Enhancement level saved:', e.target.value);
+
     });
   });
 
@@ -78,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         apiKeyInput.value = '●'.repeat(24);
         apiKeyInput.placeholder = 'API key is saved';
         deleteApiKeyBtn.style.display = 'block';
-        console.log('API key saved');
+
       });
     }
     

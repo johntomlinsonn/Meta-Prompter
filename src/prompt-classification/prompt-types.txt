@@ -1,0 +1,87 @@
+# ChatGPT Prompt Use-Case Taxonomy
+
+## 1. Informational & Factual Retrieval
+- **general_knowledge**: fact-based Q&A  
+- **domain_specific_knowledge**: expert-level data or definitions  
+
+## 2. Instructional & Tutorial
+- **step_by_step_guidance**: multi-step instructions  
+- **how_to_simplified**: "Explain like I'm 5" style instructions  
+
+## 3. Analytical & Comparative
+- **comparison_analysis**: pros/cons or side-by-side comparisons  
+- **cause_effect_analysis**: reasoning on impact or consequences  
+
+## 4. Text Generation & Writing
+- **blog_article_writing**: structured long-form content  
+- **social_media_copy**: short posts for platforms  
+- **email_letter_drafting**: formal or informal messages  
+
+## 5. Summarization & Synthesis
+- **text_summarization**: bullet or paragraph summaries  
+- **report_synthesis**: aggregate multi-source documents  
+
+## 6. Classification & Extraction
+- **text_classification**: label sentiment/topic  
+- **entity_recognition**: extract named entities  
+- **data_extraction**: parse structured information  
+
+## 7. Coding & Technical
+- **code_generation**: create code or scripts  
+- **bug_fixing_debugging**: identify & correct errors  
+- **technical_explanation**: clarify programming concepts  
+
+## 8. Creative & Content Generation
+- **storytelling_fiction**: original narrative writing  
+- **poetry_lyrics**: poems or song lyrics  
+- **ideation_brainstorming**: name or idea generation  
+
+## 9. Multimodal & Media Support
+- **image_description_analysis**: interpret visuals  
+- **transcription_captioning**: convert audio/video to text  
+
+## 10. Business & Productivity
+- **customer_support_response**: draft replies  
+- **market_research_summary**: analyze trends  
+- **plan_strategy_development**: workflow or roadmap creation  
+
+## 11. Personal Assistance
+- **meal_planning**: recipes and grocery lists  
+- **travel_itinerary_planning**: trip schedules & tips  
+- **daily_schedule_management**: task planning & reminders  
+
+## 12. Professional & Expert Roleplay
+- **persona_based_advice**: expert guidance role-based  
+- **simulation_roleplay**: interactive scenario execution  
+
+## 13. Financial Advice & Planning
+- **budgeting_finance_planning**: debt repayment or investing guidance  
+- **side_hustle_planning**: business or additional income idea generation  
+
+## 14. Emotional / Mental Support
+- **therapy_roleplay**: empathetic conversational guidance  
+- **life_coaching_advice**: supportive personal or relationship advice  
+
+## 15. Educational Assistance
+- **homework_help**: tutoring, problem walkthroughs  
+- **lesson_plan_creation**: create educational materials  
+
+## 16. Human Resources & Recruitment
+- **job_description_creation**: write or refine postings  
+- **interview_preparation**: generate Q&A and mock scenarios  
+
+## 17. Translation & Language Services
+- **text_translation**: convert text across languages  
+- **language_learning_assistance**: practice and error correction  
+
+## 18. Data Analysis & Reporting
+- **data_summary_insights**: interpret spreadsheets or tables  
+- **report_generation**: structured statistical or narrative summaries  
+
+## 19. Legal & Compliance Support
+- **contract_drafting**: generate template agreements  
+- **policy_summarization**: digest legal or policy documents  
+
+## 20. Healthcare & Medical Assistance
+- **medical_info_summary**: non-professional medical guidance  
+- **clinical_decision_support**: structured informational prompts for clinical scenarios  

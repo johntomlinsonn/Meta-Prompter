@@ -84,7 +84,7 @@ function injectMetaPromptButton(element) {
           
           // Check for chrome runtime errors
           if (chrome.runtime.lastError) {
-            console.error('Chrome runtime error:', chrome.runtime.lastError);
+
             showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
             return;
           }
@@ -199,7 +199,7 @@ function injectMetaPromptButton(element) {
                     
                     // Check for errors
                     if (chrome.runtime.lastError) {
-                      console.error('Chrome runtime error:', chrome.runtime.lastError);
+
                       showError('API_ERROR', 'Extension communication error. Please try reloading the page.');
                       if (activePromptPanel) {
                         activePromptPanel.overlay.remove();
