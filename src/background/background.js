@@ -98,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.sync.get(['enhancementLevel'], (data) => {
       sendResponse(data);
     });
-    return true; // Required for async response
+    return true; 
   }
 
   if (message.type === 'metaPrompt') {
@@ -129,7 +129,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleError(error, sendResponse);
       }
     })();
-    return true; // Indicates async response
+    return true; 
   }
 
   if (message.action === 'saveApiKey') {
@@ -141,7 +141,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ apiKey: storedApiKey });
   }
 
-  // New: Generate improvement questions for a prompt
+ 
   if (message.type === 'generatePromptQuestions') {
     (async () => {
       try {
@@ -172,32 +172,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Function to update the extension icon
-function updateExtensionIcon(active) {
-  // You can change the icon based on whether the extension is actively tracking an input
-  /* 
-  // This would require proper icon files to be added to your assets folder
-  chrome.action.setIcon({
-    path: active 
-      ? {
-          16: "src/assets/icons/icon16-active.png",
-          48: "src/assets/icons/icon48-active.png",
-          128: "src/assets/icons/icon128-active.png"
-        }
-      : {
-          16: "src/assets/icons/icon16.png",
-          48: "src/assets/icons/icon48.png",
-          128: "src/assets/icons/icon128.png"
-        }
-  });
-  */
-  
-  // You can also update the badge to show the active state
-  chrome.action.setBadgeText({
-    text: active ? 'ON' : ''
-  });
-  
-  chrome.action.setBadgeBackgroundColor({
-    color: active ? '#4CAF50' : '#CCCCCC'
-  });
-}
