@@ -19,6 +19,9 @@ export function createPromptReviewPanel({
   question = '',
   onAnswer
 } = {}) {
+  // Store conversation history
+  const conversationHistory = [];
+  
   // Create overlay and sidebar
   const overlay = document.createElement('div');
   overlay.className = 'mprp-overlay';
@@ -171,24 +174,74 @@ export function createPromptReviewPanel({
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-end;
         align-items: center;
-        padding: 32px 24px 0 24px;
+        padding: 16px 24px 0 24px;
         background: transparent;
+        overflow-y: auto;
       }
-      .mprp-question-label {
+      .mprp-chat-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+        overflow-y: auto;
+        max-height: calc(100vh - 180px);
+        padding-right: 4px;
+        scrollbar-width: thin;
+      }
+      .mprp-chat-container::-webkit-scrollbar {
+        width: 6px;
+      }
+      .mprp-chat-container::-webkit-scrollbar-thumb {
+        background-color: ${colors.borderColor};
+        border-radius: 3px;
+      }
+      .mprp-message {
+        max-width: 85%;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1.4;
+        word-break: break-word;
+        animation: mprp-message-fade-in 0.3s ease;
+      }
+      @keyframes mprp-message-fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .mprp-assistant-message {
+        align-self: flex-start;
+        background: ${colors.backgroundColor};
+        color: ${colors.textColor};
+        border: 1px solid ${colors.borderColor};
+        border-bottom-left-radius: 4px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .mprp-user-message {
+        align-self: flex-end;
+        background: rgba(37, 99, 235, 0.1);
+        color: ${colors.textColor};
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        border-bottom-right-radius: 4px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .mprp-welcome-message {
         font-size: 16px;
         color: ${colors.textColor};
         font-weight: 400;
-        margin-bottom: 24px;
         text-align: center;
-        background: ${colors.backgroundColor};
+        padding: 12px 16px;
+        margin-bottom: 12px;
         border-radius: 8px;
-        padding: 16px;
         border: 1px solid ${colors.borderColor};
-        max-width: 90%;
+        background: ${colors.backgroundColor};
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        width: 100%;
       }
       .mprp-input-area {
         display: flex;
@@ -258,10 +311,44 @@ export function createPromptReviewPanel({
   // Question area
   const questionArea = document.createElement('div');
   questionArea.className = 'mprp-question-area';
-  const questionLabel = document.createElement('div');
-  questionLabel.className = 'mprp-question-label';
-  questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${question}`;
-  questionArea.appendChild(questionLabel);
+  
+  // Chat container
+  const chatContainer = document.createElement('div');
+  chatContainer.className = 'mprp-chat-container';
+  
+  // Add welcome message
+  const welcomeMessage = document.createElement('div');
+  welcomeMessage.className = 'mprp-welcome-message';
+  welcomeMessage.textContent = 'Prompt Improvement Assistant';
+  chatContainer.appendChild(welcomeMessage);
+  
+  // Add introduction message
+  const introMessage = document.createElement('div');
+  introMessage.className = 'mprp-message mprp-assistant-message';
+  introMessage.textContent = 'Hello! I need some clarity to improve your prompt.';
+  chatContainer.appendChild(introMessage);
+  
+  // Store in conversation history
+  conversationHistory.push({
+    role: 'assistant',
+    content: 'Hello! I need some clarity to improve your prompt.'
+  });
+  
+  // Add first question if provided
+  if (question) {
+    const assistantMessage = document.createElement('div');
+    assistantMessage.className = 'mprp-message mprp-assistant-message';
+    assistantMessage.textContent = question;
+    chatContainer.appendChild(assistantMessage);
+    
+    // Store in conversation history
+    conversationHistory.push({
+      role: 'assistant',
+      content: question
+    });
+  }
+  
+  questionArea.appendChild(chatContainer);
 
   // Input area
   const inputArea = document.createElement('div');
@@ -276,15 +363,34 @@ export function createPromptReviewPanel({
   // Define handlers as named functions so they can be removed later
   function sendBtnClickHandler() {
     if (inputField.value.trim()) {
-      if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
+      const userAnswer = inputField.value.trim();
+      
+      // Create and append user message
+      const userMessage = document.createElement('div');
+      userMessage.className = 'mprp-message mprp-user-message';
+      userMessage.textContent = userAnswer;
+      chatContainer.appendChild(userMessage);
+      
+      // Store in conversation history
+      conversationHistory.push({
+        role: 'user',
+        content: userAnswer
+      });
+      
+      // Scroll to bottom
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      
+      // Call the onAnswer callback
+      if (typeof onAnswer === 'function') onAnswer(userAnswer);
+      
+      // Clear input field
       inputField.value = '';
     }
   }
   
   function inputFieldKeydownHandler(e) {
     if (e.key === 'Enter' && inputField.value.trim()) {
-      if (typeof onAnswer === 'function') onAnswer(inputField.value.trim());
-      inputField.value = '';
+      sendBtnClickHandler();
     }
   }
 
@@ -308,11 +414,40 @@ export function createPromptReviewPanel({
 
   // API for updating question
   function setQuestion(newQ, isSecondRound = false) {
-    if (isSecondRound) {
-      questionLabel.textContent = `Thanks for your answers! Let's dig deeper to further refine your prompt. ${newQ}`;
-    } else {
-      questionLabel.textContent = `Hello! I need some clarity to improve your prompt. ${newQ}`;
+    // For second round, add a separator message first if this is the first question of the round
+    if (isSecondRound && !conversationHistory.some(msg => 
+      msg.role === 'assistant' && 
+      msg.content.includes('Thanks for your answers! Let\'s dig deeper to further refine your prompt.'))) {
+      
+      // Add a transition message for second round
+      const transitionMessage = document.createElement('div');
+      transitionMessage.className = 'mprp-message mprp-assistant-message';
+      transitionMessage.textContent = 'Thanks for your answers! Let\'s dig deeper to further refine your prompt.';
+      chatContainer.appendChild(transitionMessage);
+      
+      // Store in conversation history
+      conversationHistory.push({
+        role: 'assistant',
+        content: 'Thanks for your answers! Let\'s dig deeper to further refine your prompt.'
+      });
     }
+    
+    // Create and append the question message
+    const assistantMessage = document.createElement('div');
+    assistantMessage.className = 'mprp-message mprp-assistant-message';
+    assistantMessage.textContent = newQ;
+    chatContainer.appendChild(assistantMessage);
+    
+    // Store in conversation history
+    conversationHistory.push({
+      role: 'assistant',
+      content: newQ
+    });
+    
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Focus on input field
     inputField.value = '';
     inputField.focus();
   }
@@ -336,6 +471,7 @@ export function createPromptReviewPanel({
     panel: sidebar,
     setQuestion,
     updateAnswerHandler,
+    conversationHistory,
     close: () => overlay.remove()
   };
 }
