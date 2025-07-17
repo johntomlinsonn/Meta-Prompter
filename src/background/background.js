@@ -20,6 +20,61 @@ async function getMetaPrompt(userPrompt) {
   return metaPrompt;
 }
 
+async function getAIResponse(prompt) {
+  if (!storedApiKey) {
+    throw new Error('NO_API_KEY');
+  }
+
+  const client = new Cerebras({ apiKey: storedApiKey });
+  const metaPrompt = await getMetaPrompt(prompt);
+  const completionCreateResponse = await client.chat.completions.create({
+    messages: [{ role: 'user', content: metaPrompt }],
+    model: 'llama-4-scout-17b-16e-instruct',
+  });
+
+  return completionCreateResponse;
+}
+
+function handleError(error, sendResponse) {
+  if (error.message.includes('API key') || error.message.includes('authentication')) {
+    sendResponse({ error: 'NO_API_KEY' });
+  } else if (error.message.includes('network') || error.message.includes('fetch')) {
+    sendResponse({ error: 'NO_INTERNET' });
+  } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+    sendResponse({ error: 'RATE_LIMIT' });
+  } else {
+    sendResponse({ error: 'INVALID_RESPONSE' });
+  }
+}
+
+async function getQuestions(prompt) {
+  if (!storedApiKey) {
+    throw new Error('NO_API_KEY');
+  }
+
+  const client = new Cerebras({ apiKey: storedApiKey });
+  const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
+  const completion = await client.chat.completions.create({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: prompt }
+    ],
+    model: 'llama-4-scout-17b-16e-instruct',
+  });
+  
+  const text = completion.choices[0].message.content;
+  let questions = [];
+  try {
+    questions = JSON.parse(text);
+  } catch (e) {
+    // fallback: try to extract JSON array
+    const match = text.match(/\[.*\]/s);
+    if (match) questions = JSON.parse(match[0]);
+  }
+  
+  return questions;
+}
+
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
@@ -47,36 +102,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'metaPrompt') {
-   
     (async () => {
       try {
         // If storedApiKey is null, try to load it from storage
         if (!storedApiKey) {
           chrome.storage.local.get('apiKey', async (result) => {
-
             if (result.apiKey) {
               storedApiKey = result.apiKey;
               try {
-                const client = new Cerebras({ apiKey: storedApiKey });
-                const metaPrompt = await getMetaPrompt(message.prompt);
-                const completionCreateResponse = await client.chat.completions.create({
-                  messages: [{ role: 'user', content: metaPrompt }],
-                  model: 'llama-4-scout-17b-16e-instruct',
-                });
-
+                const completionCreateResponse = await getAIResponse(message.prompt);
                 sendResponse({ result: completionCreateResponse });
               } catch (error) {
                 console.error('Cerebras API error:', error);
-                // Provide specific error types for better error handling
-                if (error.message.includes('API key') || error.message.includes('authentication')) {
-                  sendResponse({ error: 'NO_API_KEY' });
-                } else if (error.message.includes('network') || error.message.includes('fetch')) {
-                  sendResponse({ error: 'NO_INTERNET' });
-                } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-                  sendResponse({ error: 'RATE_LIMIT' });
-                } else {
-                  sendResponse({ error: 'INVALID_RESPONSE' });
-                }
+                handleError(error, sendResponse);
               }
             } else {
               sendResponse({ error: 'NO_API_KEY' });
@@ -84,26 +122,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
           return;
         }
-        const client = new Cerebras({ apiKey: storedApiKey });
-        const metaPrompt = await getMetaPrompt(message.prompt);
-        const completionCreateResponse = await client.chat.completions.create({
-          messages: [{ role: 'user', content: metaPrompt }],
-          model: 'llama-4-scout-17b-16e-instruct',
-        });
-        console.log('Cerebras AI response:', completionCreateResponse);
+        
+        const completionCreateResponse = await getAIResponse(message.prompt);
         sendResponse({ result: completionCreateResponse });
       } catch (error) {
-
-        // Provide specific error types for better error handling
-        if (error.message.includes('API key') || error.message.includes('authentication')) {
-          sendResponse({ error: 'NO_API_KEY' });
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          sendResponse({ error: 'NO_INTERNET' });
-        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-          sendResponse({ error: 'RATE_LIMIT' });
-        } else {
-          sendResponse({ error: 'INVALID_RESPONSE' });
-        }
+        handleError(error, sendResponse);
       }
     })();
     return true; // Indicates async response
@@ -127,36 +150,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (result.apiKey) {
               storedApiKey = result.apiKey;
               try {
-                const client = new Cerebras({ apiKey: storedApiKey });
-                const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
-                const completion = await client.chat.completions.create({
-                  messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: message.prompt }
-                  ],
-                  model: 'llama-4-scout-17b-16e-instruct',
-                });
-                const text = completion.choices[0].message.content;
-                let questions = [];
-                try {
-                  questions = JSON.parse(text);
-                } catch (e) {
-                  // fallback: try to extract JSON array
-                  const match = text.match(/\[.*\]/s);
-                  if (match) questions = JSON.parse(match[0]);
-                }
+                const questions = await getQuestions(message.prompt);
                 sendResponse({ questions });
               } catch (error) {
-
-                if (error.message.includes('API key') || error.message.includes('authentication')) {
-                  sendResponse({ error: 'NO_API_KEY' });
-                } else if (error.message.includes('network') || error.message.includes('fetch')) {
-                  sendResponse({ error: 'NO_INTERNET' });
-                } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-                  sendResponse({ error: 'RATE_LIMIT' });
-                } else {
-                  sendResponse({ error: 'INVALID_RESPONSE' });
-                }
+                handleError(error, sendResponse);
               }
             } else {
               sendResponse({ error: 'NO_API_KEY' });
@@ -164,36 +161,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
           return;
         }
-        const client = new Cerebras({ apiKey: storedApiKey });
-        const systemPrompt = `You are a prompt improvement assistant. Given a user prompt, generate 3-5 clarifying questions that would help you improve the prompt. Return ONLY a JSON array of questions, e.g. ["What is your intended audience?", "What is the desired tone?", ...]`;
-        const completion = await client.chat.completions.create({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: message.prompt }
-          ],
-          model: 'llama-4-scout-17b-16e-instruct',
-        });
-        const text = completion.choices[0].message.content;
-        let questions = [];
-        try {
-          questions = JSON.parse(text);
-        } catch (e) {
-          // fallback: try to extract JSON array
-          const match = text.match(/\[.*\]/s);
-          if (match) questions = JSON.parse(match[0]);
-        }
+        
+        const questions = await getQuestions(message.prompt);
         sendResponse({ questions });
       } catch (error) {
-
-        if (error.message.includes('API key') || error.message.includes('authentication')) {
-          sendResponse({ error: 'NO_API_KEY' });
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          sendResponse({ error: 'NO_INTERNET' });
-        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-          sendResponse({ error: 'RATE_LIMIT' });
-        } else {
-          sendResponse({ error: 'INVALID_RESPONSE' });
-        }
+        handleError(error, sendResponse);
       }
     })();
     return true;
