@@ -96,7 +96,7 @@ module.exports = (env, argv) => {
             }
           },
           { from: 'src/assets', to: 'assets' },
-          { from: 'src/metaprompt.txt', to: 'metaprompt.txt' }
+          { from: 'src/prompt-classification/metaprompt.txt', to: 'metaprompt.txt' }
         ]
       }),
       new HtmlWebpackPlugin({

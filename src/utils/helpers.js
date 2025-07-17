@@ -49,7 +49,7 @@ export function safeJsonParse(jsonString, fallback = {}) {
   try {
     return JSON.parse(jsonString);
   } catch (error) {
-    console.error('Error parsing JSON:', error);
+
     return fallback;
   }
 }
@@ -130,12 +130,12 @@ export function handleMetaPrompt(response) {
     }
     return jsonString;
   } else if (response && response.error) {
-    console.error('Cerebras API error:', response.error);
+
     if (typeof callback === 'function') {
       return(null, response.error);
     }
   } else {
-    console.error('No response from background script.');
+
     if (typeof callback === 'function') {
       return(null, 'No response from background script.');
     }

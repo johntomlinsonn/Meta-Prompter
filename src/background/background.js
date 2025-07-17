@@ -12,11 +12,8 @@ chrome.storage.local.get('apiKey', (result) => {
   }
 });
 
-// Keep track of which inputs are active across tabs
-let activeInputs = {};
 
 async function getMetaPrompt(userPrompt) {
-  // Read metaprompt.txt and replace {USER_PROMPT}
   const response = await fetch(chrome.runtime.getURL('metaprompt.txt'));
   let metaPrompt = await response.text();
   metaPrompt = metaPrompt.replace(/`\{USER_PROMPT\}`/g, userPrompt);
@@ -39,7 +36,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Message received:', message);
+
   
   // Handle different message types
   if (message.type === 'getData') {
@@ -66,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   messages: [{ role: 'user', content: metaPrompt }],
                   model: 'llama-4-scout-17b-16e-instruct',
                 });
-                console.log('Cerebras AI response:', completionCreateResponse);
+
                 sendResponse({ result: completionCreateResponse });
               } catch (error) {
                 console.error('Cerebras API error:', error);
@@ -96,7 +93,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log('Cerebras AI response:', completionCreateResponse);
         sendResponse({ result: completionCreateResponse });
       } catch (error) {
-        console.error('Cerebras API error:', error);
+
         // Provide specific error types for better error handling
         if (error.message.includes('API key') || error.message.includes('authentication')) {
           sendResponse({ error: 'NO_API_KEY' });
@@ -150,7 +147,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
                 sendResponse({ questions });
               } catch (error) {
-                console.error('Cerebras API error:', error);
+
                 if (error.message.includes('API key') || error.message.includes('authentication')) {
                   sendResponse({ error: 'NO_API_KEY' });
                 } else if (error.message.includes('network') || error.message.includes('fetch')) {
@@ -187,7 +184,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ questions });
       } catch (error) {
-        console.error('Cerebras API error:', error);
+
         if (error.message.includes('API key') || error.message.includes('authentication')) {
           sendResponse({ error: 'NO_API_KEY' });
         } else if (error.message.includes('network') || error.message.includes('fetch')) {

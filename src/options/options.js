@@ -18,7 +18,7 @@ const defaultSettings = {
 
 // Initialize options page
 function initializeOptions() {
-  console.log('Options page initialized');
+
   
   // Load current settings
   loadSettings();
@@ -38,7 +38,7 @@ function loadSettings() {
     notificationsEnabled.checked = settings.notifications || false;
     updateInterval.value = settings.updateInterval || 15;
     
-    console.log('Settings loaded:', settings);
+
   });
 }
 
@@ -52,7 +52,7 @@ function saveSettings() {
   };
   
   chrome.storage.sync.set({ settings }, () => {
-    console.log('Settings saved:', settings);
+
     
     // Show save confirmation
     showSaveConfirmation();
