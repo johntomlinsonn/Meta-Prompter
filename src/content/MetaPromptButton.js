@@ -86,11 +86,9 @@ export function createMetaPromptButton(element, onClick) {
       if (!originalBackgroundColor) {
         const computedStyle = window.getComputedStyle(element);
         originalBackgroundColor = computedStyle.backgroundColor;
-        originalColor = computedStyle.color;
       }
       element.style.transition = 'background-color 0.2s ease, color 0.2s ease';
-      element.style.backgroundColor = '#fff9c4'; // Pastel yellow
-      element.style.color = '#000000'; // Black text
+      element.style.backgroundColor = '#fff9c488'; // Pastel yellow
     }
   });
   button.addEventListener('mouseleave', () => {
@@ -101,7 +99,6 @@ export function createMetaPromptButton(element, onClick) {
     // Remove highlight from the referenced text element
     if (element) {
       element.style.backgroundColor = originalBackgroundColor || '';
-      element.style.color = originalColor || '';
       // Remove the transition after a short delay to prevent flickering
       setTimeout(() => {
         element.style.transition = '';
