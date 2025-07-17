@@ -99,10 +99,7 @@ export function createMetaPromptButton(element, onClick) {
     // Remove highlight from the referenced text element
     if (element) {
       element.style.backgroundColor = originalBackgroundColor || '';
-      // Remove the transition after a short delay to prevent flickering
-      setTimeout(() => {
-        element.style.transition = '';
-      }, 200);
+      element.style.transition = '';
     }
   });
   button.addEventListener('focus', () => {});
